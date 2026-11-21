@@ -162,6 +162,6 @@ Every unresolved gap appears below and in `gaps.csv`. “Blocking” controls or
 | `report.md` | Evidence-based confirmed, unconfirmed and failure-mode tables. |
 | `research_prompt.md` | Reusable instructions for closing the research gaps honestly. |
 
-The delivered revision passed **149 offline checks** on Python 3.12.14. The suite also parses every module using the Python 3.9 grammar; a native Python 3.9 interpreter was unavailable in the build environment. See the Offline verification table in `report.md` for the observed commands and limits. Passing fixtures does not verify an authenticated API response, a blocked tracker, support-question order, recovery eligibility or account ownership. No account recovery or ticket submission is part of the test suite.
+The delivered revision passes the full offline suite on Python 3.12.14. The suite also parses every module using the Python 3.9 grammar; a native Python 3.9 interpreter was unavailable in the build environment. See the Offline verification table in `report.md` for the observed commands and limits. Passing fixtures does not verify an authenticated API response, a blocked tracker, support-question order, recovery eligibility or account ownership. No account recovery or ticket submission is part of the test suite.
 
 `tools/` is repository scaffolding, not part of the 17-file distribution.

@@ -571,7 +571,7 @@ def _net_checks(suite: Suite, net: object, sources: dict, temp: Path) -> None:
             equal(len(calls) - before, 2)
         suite.check("net: POST is neither retried nor cached", post_once)
 
-        for status in (0, 429, 502, 503, 504):
+        for status in (0, 429, 502, 503, 504, 520, 522):
             def retry_case(status=status):
                 before = len(calls)
                 statuses[:] = [status, 200]
@@ -814,6 +814,8 @@ def _run(root: Path, suite: Suite, temp: Path) -> None:
         suite.check("Python3.9 syntax and exit docs: " + path.name, syntax_and_doc)
 
     config = json.loads((root / "sources.json").read_text(encoding="utf-8"))
+    if isinstance(config, list):
+        config = {"sources": config}
     obstacles = json.loads((root / "obstacles.json").read_text(encoding="utf-8"))
     template = json.loads((root / "profile.json").read_text(encoding="utf-8"))
     with (root / "gaps.csv").open(encoding="utf-8-sig", newline="") as handle:
