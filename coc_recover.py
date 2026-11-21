@@ -16,13 +16,6 @@ from pathlib import Path
 from typing import Optional
 
 import net
-import random
-import sys
-import threading
-import time
-import urllib.error
-import urllib.parse
-import urllib.request
 
 TEMPLATE = {"tag": "", "name": "", "th": "", "xp": "", "clan": "", "date": "",
             "devices": [], "location": "", "country_code": "", "email": "",
@@ -435,29 +428,24 @@ def report(tag, open_it=False) -> str:
     return text + "\nStill owner-supplied: " + ", ".join(missing) + "\n"
 
 
-SCID = "https://ingame.id.supercell.com/api"
 COC = "magic"
 SCID_GAMES = {"magic": "Clash of Clans", "scroll": "Clash Royale",
               "laser": "Brawl Stars", "soil": "Hay Day", "reef": "Boom Beach"}
 
 
 def _scid_post(path, form, token=None):
-    h = {"Content-Type": "application/x-www-form-urlencoded",
-         "Accept": "application/json", "User-Agent": "coc-recover/1.0"}
+    headers = {"Content-Type": "application/x-www-form-urlencoded",
+               "Accept": "application/json"}
     if token:
-        h["Authorization"] = "Bearer " + token
-    body = urllib.parse.urlencode(form).encode()
-    req = urllib.request.Request(SCID + path, data=body, headers=h)
+        headers["Authorization"] = "Bearer " + token
+    response = net.fetch(net.SCID_API_BASE + path, method="POST",
+                         headers=headers, data=net.form(form), ttl=0, timeout=25)
     try:
-        with urllib.request.urlopen(req, timeout=25) as r:
-            return json.loads(r.read().decode() or "{}")
-    except urllib.error.HTTPError as e:
-        try:
-            return json.loads(e.read().decode() or "{}")
-        except Exception:
-            return {"ok": False, "error": "http_%s" % e.code}
-    except Exception as e:
-        return {"ok": False, "error": "transport_%s" % type(e).__name__}
+        payload = json.loads(response.body or "{}")
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "http_%s" % response.status
+                if response.status else "transport"}
+    return payload if isinstance(payload, dict) else {"ok": False, "error": "badjson"}
 
 
 def _data(r):

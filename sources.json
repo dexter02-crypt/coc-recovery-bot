@@ -1,836 +1,909 @@
-[
-  {
-    "name": "official_api",
-    "base": "https://api.clashofclans.com/v1",
-    "paths": [
-      "/players/%23%TAG%"
-    ],
-    "markers": [],
-    "kind": "api",
-    "verified_how": "unverified",
-    "date_checked": "2026-11-22",
-    "json": true,
-    "auth": true,
-    "js": false,
-    "blocked": false,
-    "source_url": "https://developer.clashofclans.com/#/documentation",
-    "notes": "Configured official API base. No authenticated request was made in the saved research. COC_API_BASE and COC_API_TOKEN are supplied privately at runtime; never store the token here. The API does not establish original ownership or account creation date."
-  },
-  {
-    "name": "clashking",
-    "base": "https://api.clashk.ing/v2",
-    "paths": [
-      "/player/%23%TAG%/join-leave",
-      "/player/%23%TAG%/history/changes",
-      "/player/%23%TAG%/rankings",
-      "/player/%23%TAG%/war/attacks",
-      "/player/%23%TAG%/war/stats",
-      "/player/%23%TAG%/cwl/history",
-      "/player/%23%TAG%/league/history"
-    ],
-    "markers": [],
-    "kind": "api",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "json": true,
-    "auth": false,
-    "js": false,
-    "blocked": false,
-    "source_url": "https://api.clashk.ing/openapi.json",
-    "schema": {
-      "/player/%23%TAG%/join-leave": {
-        "dates": [
-          "time",
-          "timestamp",
-          "date",
-          "items.*.time",
-          "items.*.timestamp",
-          "data.*.time"
-        ],
-        "tags": [
-          "tag",
-          "player.tag",
-          "items.*.tag",
-          "data.*.tag"
-        ],
-        "clans": [
-          "clan.tag",
-          "clan_tag",
-          "items.*.clan.tag",
-          "data.*.clan.tag"
-        ]
+{
+  "sources": [
+    {
+      "name": "official_api",
+      "base": "https://api.clashofclans.com/v1",
+      "paths": [
+        "/players/%23%TAG%"
+      ],
+      "markers": [],
+      "kind": "api",
+      "verified_how": "unverified",
+      "date_checked": "2026-11-22",
+      "json": true,
+      "auth": true,
+      "js": false,
+      "blocked": false,
+      "source_url": "https://developer.clashofclans.com/#/documentation",
+      "notes": "Configured official API base. No authenticated request was made in the saved research. COC_API_BASE and COC_API_TOKEN are supplied privately at runtime; never store the token here. The API does not establish original ownership or account creation date."
+    },
+    {
+      "name": "clashking",
+      "base": "https://api.clashk.ing/v2",
+      "paths": [
+        "/player/%23%TAG%/join-leave",
+        "/player/%23%TAG%/history/changes",
+        "/player/%23%TAG%/rankings",
+        "/player/%23%TAG%/war/attacks",
+        "/player/%23%TAG%/war/stats",
+        "/player/%23%TAG%/cwl/history",
+        "/player/%23%TAG%/league/history"
+      ],
+      "markers": [],
+      "kind": "api",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "json": true,
+      "auth": false,
+      "js": false,
+      "blocked": false,
+      "source_url": "https://api.clashk.ing/openapi.json",
+      "schema": {
+        "/player/%23%TAG%/join-leave": {
+          "dates": [
+            "time",
+            "timestamp",
+            "date",
+            "items.*.time",
+            "items.*.timestamp",
+            "data.*.time"
+          ],
+          "tags": [
+            "tag",
+            "player.tag",
+            "items.*.tag",
+            "data.*.tag"
+          ],
+          "clans": [
+            "clan.tag",
+            "clan_tag",
+            "items.*.clan.tag",
+            "data.*.clan.tag"
+          ]
+        },
+        "/player/%23%TAG%/history/changes": {
+          "dates": [
+            "time",
+            "timestamp",
+            "date",
+            "items.*.time",
+            "items.*.timestamp",
+            "data.*.time"
+          ],
+          "tags": [
+            "tag",
+            "player.tag",
+            "items.*.tag",
+            "data.*.tag"
+          ],
+          "clans": [
+            "clan.tag",
+            "items.*.clan.tag",
+            "data.*.clan.tag"
+          ]
+        },
+        "/player/%23%TAG%/rankings": {
+          "dates": [
+            "time",
+            "timestamp",
+            "date",
+            "items.*.time",
+            "data.*.time"
+          ],
+          "tags": [
+            "tag",
+            "player.tag",
+            "items.*.tag",
+            "data.*.tag"
+          ],
+          "clans": [
+            "clan.tag",
+            "items.*.clan.tag",
+            "data.*.clan.tag"
+          ]
+        },
+        "/player/%23%TAG%/war/attacks": {
+          "dates": [
+            "time",
+            "timestamp",
+            "war.startTime",
+            "war.endTime",
+            "items.*.time",
+            "items.*.war.startTime",
+            "items.*.war.endTime",
+            "data.*.time",
+            "items.*.warEndTime",
+            "warEndTime"
+          ],
+          "tags": [
+            "tag",
+            "attacker.tag",
+            "defender.tag",
+            "items.*.attacker.tag",
+            "items.*.defender.tag",
+            "data.*.attacker.tag",
+            "data.*.defender.tag"
+          ],
+          "clans": [
+            "clan.tag",
+            "attackingClan.tag",
+            "defendingClan.tag",
+            "war.clan.tag",
+            "war.opponent.tag",
+            "items.*.clan.tag",
+            "items.*.attackingClan.tag",
+            "items.*.defendingClan.tag",
+            "items.*.defendingClanTag",
+            "items.*.attackingClanTag",
+            "defendingClanTag",
+            "attackingClanTag"
+          ]
+        },
+        "/player/%23%TAG%/war/stats": {
+          "dates": [
+            "time",
+            "timestamp",
+            "date",
+            "items.*.time"
+          ],
+          "tags": [
+            "tag",
+            "player.tag",
+            "items.*.tag"
+          ],
+          "clans": [
+            "clan.tag",
+            "items.*.clan.tag"
+          ]
+        },
+        "/player/%23%TAG%/cwl/history": {
+          "dates": [
+            "time",
+            "timestamp",
+            "season",
+            "items.*.time",
+            "items.*.season",
+            "data.*.season"
+          ],
+          "tags": [
+            "tag",
+            "player.tag",
+            "items.*.tag",
+            "data.*.tag"
+          ],
+          "clans": [
+            "clan.tag",
+            "items.*.clan.tag",
+            "data.*.clan.tag"
+          ]
+        },
+        "/player/%23%TAG%/league/history": {
+          "dates": [
+            "time",
+            "timestamp",
+            "season",
+            "items.*.time",
+            "items.*.season",
+            "data.*.season"
+          ],
+          "tags": [
+            "tag",
+            "player.tag",
+            "items.*.tag",
+            "data.*.tag"
+          ],
+          "clans": [
+            "clan.tag",
+            "items.*.clan.tag",
+            "data.*.clan.tag"
+          ]
+        }
       },
-      "/player/%23%TAG%/history/changes": {
-        "dates": [
-          "time",
-          "timestamp",
-          "date",
-          "items.*.time",
-          "items.*.timestamp",
-          "data.*.time"
-        ],
-        "tags": [
-          "tag",
-          "player.tag",
-          "items.*.tag",
-          "data.*.tag"
-        ],
-        "clans": [
-          "clan.tag",
-          "items.*.clan.tag",
-          "data.*.clan.tag"
-        ]
-      },
-      "/player/%23%TAG%/rankings": {
-        "dates": [
-          "time",
-          "timestamp",
-          "date",
-          "items.*.time",
-          "data.*.time"
-        ],
-        "tags": [
-          "tag",
-          "player.tag",
-          "items.*.tag",
-          "data.*.tag"
-        ],
-        "clans": [
-          "clan.tag",
-          "items.*.clan.tag",
-          "data.*.clan.tag"
-        ]
-      },
-      "/player/%23%TAG%/war/attacks": {
-        "dates": [
-          "time",
-          "timestamp",
-          "war.startTime",
-          "war.endTime",
-          "items.*.time",
-          "items.*.war.startTime",
-          "items.*.war.endTime",
-          "data.*.time",
-          "items.*.warEndTime",
-          "warEndTime"
-        ],
-        "tags": [
-          "tag",
-          "attacker.tag",
-          "defender.tag",
-          "items.*.attacker.tag",
-          "items.*.defender.tag",
-          "data.*.attacker.tag",
-          "data.*.defender.tag"
-        ],
-        "clans": [
-          "clan.tag",
-          "attackingClan.tag",
-          "defendingClan.tag",
-          "war.clan.tag",
-          "war.opponent.tag",
-          "items.*.clan.tag",
-          "items.*.attackingClan.tag",
-          "items.*.defendingClan.tag",
-          "items.*.defendingClanTag",
-          "items.*.attackingClanTag",
-          "defendingClanTag",
-          "attackingClanTag"
-        ]
-      },
-      "/player/%23%TAG%/war/stats": {
-        "dates": [
-          "time",
-          "timestamp",
-          "date",
-          "items.*.time"
-        ],
-        "tags": [
-          "tag",
-          "player.tag",
-          "items.*.tag"
-        ],
-        "clans": [
-          "clan.tag",
-          "items.*.clan.tag"
-        ]
-      },
-      "/player/%23%TAG%/cwl/history": {
-        "dates": [
-          "time",
-          "timestamp",
-          "season",
-          "items.*.time",
-          "items.*.season",
-          "data.*.season"
-        ],
-        "tags": [
-          "tag",
-          "player.tag",
-          "items.*.tag",
-          "data.*.tag"
-        ],
-        "clans": [
-          "clan.tag",
-          "items.*.clan.tag",
-          "data.*.clan.tag"
-        ]
-      },
-      "/player/%23%TAG%/league/history": {
-        "dates": [
-          "time",
-          "timestamp",
-          "season",
-          "items.*.time",
-          "items.*.season",
-          "data.*.season"
-        ],
-        "tags": [
-          "tag",
-          "player.tag",
-          "items.*.tag",
-          "data.*.tag"
-        ],
-        "clans": [
-          "clan.tag",
-          "items.*.clan.tag",
-          "data.*.clan.tag"
-        ]
+      "schema_verified": false,
+      "gaps": [
+        "G16",
+        "G19",
+        "G20"
+      ],
+      "notes": "The saved research observed documented join-leave, history/changes, rankings, war/attacks, war/stats and cwl/history routes. An earlier encoded-tag war/attacks request returned one recorded defense with HTTP 200. Exact current live fields, complete coverage, all schema candidate paths and league/history remain unconfirmed. Schema entries are extraction candidates, not a claimed validated upstream schema. A season label or feature-release date is not account creation evidence.",
+      "sample_observation": {
+        "path": "/player/%23G0JCRJQ0R/war/attacks?limit=1",
+        "result": "Earlier direct HTTP response 200 recorded one defense; not a fresh request by this packaging step.",
+        "date_checked": "2026-11-22"
       }
     },
-    "schema_verified": false,
-    "gaps": [
-      "G16",
-      "G19",
-      "G20"
-    ],
-    "notes": "The saved research observed documented join-leave, history/changes, rankings, war/attacks, war/stats and cwl/history routes. An earlier encoded-tag war/attacks request returned one recorded defense with HTTP 200. Exact current live fields, complete coverage, all schema candidate paths and league/history remain unconfirmed. Schema entries are extraction candidates, not a claimed validated upstream schema. A season label or feature-release date is not account creation evidence.",
-    "sample_observation": {
-      "path": "/player/%23G0JCRJQ0R/war/attacks?limit=1",
-      "result": "Earlier direct HTTP response 200 recorded one defense; not a fresh request by this packaging step.",
-      "date_checked": "2026-11-22"
+    {
+      "name": "clashking_docs",
+      "base": "https://api.clashk.ing",
+      "paths": [
+        "/openapi.json",
+        "/swagger/index.html"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "notes": "OpenAPI route inventory inspected in the saved research; documentation does not prove current live responses.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "clashspot",
+      "base": "https://clashspot.net",
+      "paths": [
+        "/en/player/%TAG%/view",
+        "/en/player/%TAG%/war-attacks"
+      ],
+      "markers": [
+        "CW & CWL"
+      ],
+      "kind": "tracker",
+      "verified_how": "browser-403",
+      "date_checked": "2026-11-22",
+      "auth": false,
+      "js": false,
+      "blocked": false,
+      "source_url": "https://clashspot.net/en/player/GLLPPGL/ranked/seasons-history",
+      "gaps": [
+        "G16"
+      ],
+      "notes": "The supplied overview route and the observed CW/CWL navigation target returned 403. A separate profile page exposed ranked-season rows. The target payload, authentication requirement and JavaScript dependence are unconfirmed; false js/auth flags mean not positively established, not proof of absence. Do not bypass a denial."
+    },
+    {
+      "name": "clashofstats",
+      "base": "https://www.clashofstats.com",
+      "paths": [
+        "/players/%TAG%/history/log",
+        "/players/%TAG%/summary"
+      ],
+      "markers": [],
+      "kind": "tracker",
+      "verified_how": "unverified",
+      "date_checked": "2026-11-22",
+      "auth": false,
+      "js": false,
+      "blocked": false,
+      "gaps": [
+        "G16"
+      ],
+      "notes": "Candidate routes inherited from the supplied configuration. Web-reader requests were inaccessible; no payload or exact schema was observed. A clan-history log must not be presented as individual war-attack history. False js/auth flags are not positive verification."
+    },
+    {
+      "name": "clashninja",
+      "base": "https://www.clash.ninja",
+      "paths": [
+        "/stats-tracker/player/%TAG%"
+      ],
+      "markers": [],
+      "kind": "tracker",
+      "verified_how": "unverified",
+      "date_checked": "2026-11-22",
+      "auth": false,
+      "js": false,
+      "blocked": false,
+      "source_url": "https://www.clash.ninja/blog/introducing-the-stats-tracker",
+      "gaps": [
+        "G16"
+      ],
+      "notes": "Publisher launch article dated 2020-07-22 describes player/clan activity and war tracking. Current player route, access requirements and payload remain unconfirmed. Direct article open returned 403; dated publisher text was readable in search extraction."
+    },
+    {
+      "name": "clashinsight",
+      "base": "https://clashinsight.com",
+      "paths": [
+        "/player/%TAG%"
+      ],
+      "markers": [],
+      "kind": "tracker",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "auth": false,
+      "js": true,
+      "blocked": false,
+      "source_url": "https://clashinsight.com/player",
+      "gaps": [
+        "G16"
+      ],
+      "notes": "Indexed player profile describes stats and recorded attacks/defenses from ClashKing. The publisher states that recorded battles require JavaScript and public lookup needs no login. A direct sampled profile returned 503. Live war data and complete coverage remain unconfirmed."
+    },
+    {
+      "name": "fwacc",
+      "base": "https://cc.fwafarm.com",
+      "paths": [
+        "/cc_n/"
+      ],
+      "markers": [],
+      "kind": "tracker",
+      "verified_how": "browser-loads",
+      "date_checked": "2026-11-22",
+      "auth": false,
+      "js": false,
+      "blocked": true,
+      "source_url": "https://chocolateclash.com/cc_n/",
+      "gaps": [
+        "G04",
+        "G07",
+        "G08"
+      ],
+      "notes": "Only a Cloudflare access-denied page loaded in the saved browser research. No lookup was submitted and no player-result address was observed. This registry deliberately contains only the known index; no guessed PHP player endpoint. HTTP status and player payload remain unconfirmed. Stop at the access denial."
+    },
+    {
+      "name": "chocolateclash_notice",
+      "base": "https://chocolateclash.com",
+      "paths": [
+        "/cc_n/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "browser-loads",
+      "date_checked": "2026-11-22",
+      "auth": false,
+      "js": false,
+      "blocked": false,
+      "notes": "Maintainer retirement/migration notice was observed. It gives a shutdown date of 2025-01-01 and names the FWA-hosted successor. An Apr 6 non-FWA discontinuation update has no adjacent year; do not infer its year or every affected league.",
+      "source_date": "2025-01-01"
+    },
+    {
+      "name": "warreport",
+      "base": "https://warreport.app",
+      "paths": [
+        "/players/%TAG%"
+      ],
+      "markers": [],
+      "kind": "tracker",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "auth": false,
+      "js": true,
+      "blocked": false,
+      "source_url": "https://warreport.app/about/docs/features/embedding/",
+      "gaps": [
+        "G16"
+      ],
+      "notes": "Publisher documentation gives the players route pattern and says the service requires no account. The app requires JavaScript. A documented sample player fetch returned 404; current player output remains unconfirmed and that result does not prove all routes are dead."
+    },
+    {
+      "name": "warreport_docs",
+      "base": "https://warreport.app",
+      "paths": [
+        "/about/docs/features/players/",
+        "/about/docs/features/embedding/",
+        "/about/docs/faq/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "notes": "Publisher documents attacks/defenses, aggregates, prior clans and no-login access. These documents are not live player observations.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "fwastats",
+      "base": "https://fwastats.com",
+      "paths": [
+        "/Players"
+      ],
+      "markers": [],
+      "kind": "tracker",
+      "verified_how": "browser-loads",
+      "date_checked": "2026-11-22",
+      "auth": true,
+      "js": false,
+      "blocked": false,
+      "source_url": "https://fwastats.com/Account/Login?ReturnUrl=/Players",
+      "gaps": [
+        "G16"
+      ],
+      "notes": "The Players entry redirected to a login form. It is a list/login entry, not a verified per-player URL. Authenticated player-history fields and any successor relationship to ChocolateClash remain unconfirmed. No authentication is automated. See fwastats-player for the sourced per-player route."
+    },
+    {
+      "name": "kuilin",
+      "base": "https://kuilin.net",
+      "paths": [
+        "/cc_n/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "unverified",
+      "date_checked": "2026-11-22",
+      "auth": false,
+      "js": false,
+      "blocked": false,
+      "source_url": "https://chocolateclash.com/cc_n/",
+      "notes": "Earlier direct HTTP observation followed this exact legacy path to the ChocolateClash shutdown notice; fresh web-reader access was unavailable. No claim that all old paths redirect or that the entire site moved."
+    },
+    {
+      "name": "band",
+      "base": "https://band.us",
+      "paths": [
+        "/search/%TAG%"
+      ],
+      "markers": [],
+      "kind": "manual",
+      "verified_how": "unverified",
+      "date_checked": "2026-11-22",
+      "auth": false,
+      "js": false,
+      "blocked": false,
+      "gaps": [
+        "G01",
+        "G16"
+      ],
+      "notes": "Candidate manual search route was inaccessible. No public player payload, complete support transcript, private group access or sign-in was observed. Do not infer that this route currently works."
+    },
+    {
+      "name": "official_deeplink",
+      "base": "https://link.clashofclans.com",
+      "paths": [
+        "/en?action=OpenPlayerProfile&tag=%23%TAG%"
+      ],
+      "markers": [],
+      "kind": "manual",
+      "verified_how": "unverified",
+      "date_checked": "2026-11-22",
+      "auth": false,
+      "js": false,
+      "blocked": false,
+      "notes": "Supplied game-profile deep link. No game was launched and live behavior is unconfirmed. TAG excludes the leading hash; the template adds its encoding. Not a public ownership, Account Protection or war-history lookup."
+    },
+    {
+      "name": "egress_country",
+      "base": "https://ipapi.co",
+      "paths": [
+        "/json/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "json": true,
+      "auth": false,
+      "js": false,
+      "blocked": false,
+      "source_url": "https://ipapi.co/api/",
+      "schema": {
+        "/json/": {
+          "country_code": [
+            "country_code"
+          ]
+        }
+      },
+      "gaps": [
+        "G20"
+      ],
+      "notes": "Primary API documentation verified by the integration owner on 2026-11-22 describes a country_code field in JSON. No IP-geolocation result establishes where an account was created. Retain only the country code needed for the local consistency check, not a raw IP address."
+    },
+    {
+      "name": "official_lost_account",
+      "base": "https://support.supercell.com",
+      "paths": [
+        "/clash-of-clans/en/articles/ive-lost-access-to-my-account-2.html"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "gaps": [
+        "G01",
+        "G14",
+        "G15"
+      ],
+      "notes": "Saved research observed article text through public search extraction; direct opens had no readable body. Describes supported recovery routes and information to prepare, not a verified ordered chatbot dialogue. Publication/revision date unconfirmed.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "official_player_tag",
+      "base": "https://support.supercell.com",
+      "paths": [
+        "/clash-of-clans/en/articles/player-tag.html"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "notes": "Saved research observed public article text: tag identifies the account but alone is insufficient for recovery. Publication/revision date unconfirmed.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "official_account_index",
+      "base": "https://support.supercell.com",
+      "paths": [
+        "/clash-of-clans/en/account/index.html"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "gaps": [
+        "G15"
+      ],
+      "notes": "Account navigation/index text was observed in public search extraction. Not a recovery decision tree or internal lookup specification.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "official_account_protection",
+      "base": "https://sc-clashofclans.zendesk.com",
+      "paths": [
+        "/hc/en-us/articles/54567842057755-Account-Protection"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "gaps": [
+        "G03",
+        "G06"
+      ],
+      "notes": "Saved public documentation describes SMS/recovery-code verification and feature unavailability in Belarus, Russia, China, Iran, Vietnam, Cuba and North Korea. It does not establish a universal country ban on every recovery route. No tag-only public protection-status lookup is documented in the observed article. Publication/revision date unconfirmed.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "official_ap_announcement",
+      "base": "https://supercell.com",
+      "paths": [
+        "/en/games/clashofclans/blog/news/upcoming-scid-changes/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "source_date": "2022-12-09",
+      "notes": "Historical official launch announcement warns about simultaneously losing phone, email and recovery codes. Do not relabel this as a newly dated current rule or a regional test.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "official_parents",
+      "base": "https://supercell.com",
+      "paths": [
+        "/en/parents/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "gaps": [
+        "G09"
+      ],
+      "notes": "Official parent guide describes support availability and supported languages. It supplies no measured language-specific queue advantage or best hour for recovery requests.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "official_keep_safe",
+      "base": "https://sc-clashofclans.zendesk.com",
+      "paths": [
+        "/hc/en-us/articles/54567895884059-How-Can-I-Keep-My-Account-Safe"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "gaps": [
+        "G05"
+      ],
+      "notes": "Official guidance tells the actual player to contact support directly; attempting to recover another player account is described as phishing. The article does not specify one fixed helper-account penalty duration.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "official_penalties",
+      "base": "https://sc-clashofclans.zendesk.com",
+      "paths": [
+        "/hc/en-us/articles/54577342797467-Account-Penalties-What-Are-They-and-When-Are-They-Used"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "gaps": [
+        "G05"
+      ],
+      "notes": "Observed official guidance describes penalties depending on severity or repetition. It does not disclose recovery answer thresholds or guarantee a 31-day security lock.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "fwa_guide",
+      "base": "https://sites.google.com",
+      "paths": [
+        "/site/fwaguide/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "gaps": [
+        "G04"
+      ],
+      "notes": "FWA guide describes player flags/bans and clan association. It does not validate an exact current player endpoint or prove full war history.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "gfl_historical_listing",
+      "base": "https://top.gg",
+      "paths": [
+        "/bot/966293804699238411"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "gaps": [
+        "G07"
+      ],
+      "notes": "Publisher listing references historical ChocolateClash use for several leagues. No active GFL-specific successor or current player payload was verified.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "fwl_community_listing",
+      "base": "https://top.gg",
+      "paths": [
+        "/discord/servers/543749825481613324"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "gaps": [
+        "G08"
+      ],
+      "notes": "A public community listing mentions farm-war leagues but supplies no verified FWL tracker successor. Do not substitute an unrelated competitive league with the same initials.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "historical_chocolate_client",
+      "base": "https://pkg.go.dev",
+      "paths": [
+        "/github.com/git-avilabs/chocolate-clash-go-api"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "github-code-reference",
+      "date_checked": "2026-11-22",
+      "source_date": "2023-08-16",
+      "gaps": [
+        "G07",
+        "G08"
+      ],
+      "notes": "Dated published client documentation is evidence of a historical client only. No client was installed or executed and no current endpoint was validated from it.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "q_rejection",
+      "base": "https://www.reddit.com",
+      "paths": [
+        "/r/ClashOfClans/comments/1jtc7sb/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "source_date": "2025-04-07",
+      "gaps": [
+        "G01",
+        "G15"
+      ],
+      "notes": "Observed public report only. Earlier indexed author quotation of account-not-found/retry wording. Fresh date retrieval and original conversation authenticity remain unconfirmed. One fragment, not a full transcript.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "q_spend",
+      "base": "https://www.reddit.com",
+      "paths": [
+        "/r/ClashOfClans/comments/1ravt7m/over_1000_spent_zero_help_from_support/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "source_date": "2026-02-21",
+      "gaps": [
+        "G02",
+        "G18"
+      ],
+      "notes": "Observed public report only. Author reports substantial spending, receipts and unsuccessful recovery. Spending, ownership, backend assessment and any spending threshold remain unconfirmed.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "q_ban31",
+      "base": "https://www.reddit.com",
+      "paths": [
+        "/r/ClashOfClans/comments/1pnfko2/beware_of_vpn_usage_for_returning_players/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "source_date": "2025-12-15",
+      "gaps": [
+        "G05"
+      ],
+      "notes": "Observed public report only. Author reports a 31-day account-sharing suspension followed by a permanent suspension. Not a 31-day security lock. VPN causation and any universal penalty rule remain unconfirmed.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "q_lock_recovered",
+      "base": "https://www.reddit.com",
+      "paths": [
+        "/r/ClashOfClans/comments/1u7h1nb/10_year_account_locked_need_help/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "source_date": "2026-06-16",
+      "gaps": [
+        "G05",
+        "G14"
+      ],
+      "notes": "Observed public report only. Author reports a security lock and an edited later recovery after roughly 24 hours. Exact edit date, human intervention, cause and a universal cooldown remain unconfirmed.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "q_receipt_rejection",
+      "base": "https://www.reddit.com",
+      "paths": [
+        "/r/ClashOfClans/comments/1xzbqwq/need_help_with_coc_support/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "source_date": "2026-11-18",
+      "gaps": [
+        "G18"
+      ],
+      "notes": "Observed public report only. Author reports Apple receipt submission followed by rejection. Receipt validity, match, private checks and helper-account penalties remain unconfirmed.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "q_rate_limit",
+      "base": "https://www.reddit.com",
+      "paths": [
+        "/r/COC/comments/1u0v3s9/stuck_in_automated_bot_loop_after_account_hack/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "source_date": "2026-06-09",
+      "gaps": [
+        "G01",
+        "G05"
+      ],
+      "notes": "Observed public report only. Author quotes a too-many-requests response. Threshold, timing window and exact preceding question remain unconfirmed.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "q_handoff",
+      "base": "https://www.reddit.com",
+      "paths": [
+        "/r/ClashOfClans/comments/1k1pi2k/comment/mnpypnw/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "source_date": "2025-04-18",
+      "gaps": [
+        "G14"
+      ],
+      "notes": "Observed public report only. Comment contains a truncated agent-assignment phrase. Actual human assignment, preceding sequence and outcome remain unconfirmed.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "q_phishing_incident",
+      "base": "https://www.reddit.com",
+      "paths": [
+        "/r/ClashOfClans/comments/1vy40n9/we_lost_4_accounts_and_our_entire_clan_during_a/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "source_date": "2026-08-25",
+      "gaps": [
+        "G05"
+      ],
+      "notes": "Observed public report only. Thread initially presents a recovery-code collection procedure as support; author later acknowledges apparent impersonation. Exclude from official recovery procedures and penalty evidence.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "q_helper_historical",
+      "base": "https://www.reddit.com",
+      "paths": [
+        "/r/ClashOfClans/comments/owqyb7/"
+      ],
+      "markers": [],
+      "kind": "reference",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "source_date": "2021-08-02",
+      "gaps": [
+        "G05"
+      ],
+      "notes": "Observed public report only. Historical first-person report of a 31-day contacting-account ban after attempting a friend account recovery. Outside the 2025-onward window; not current policy verification.",
+      "js": false,
+      "blocked": false
+    },
+    {
+      "name": "scid",
+      "base": "https://ingame.id.supercell.com",
+      "json": true,
+      "paths": [
+        "/api/account/login",
+        "/api/account/login.validate"
+      ],
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-21",
+      "blocking": "yes",
+      "markers": [],
+      "js": false,
+      "blocked": false,
+      "notes": "Documented private routes, form-encoded only; game=magic is CoC per the doc's own table. login.validate returns application.account/username, i.e. the tag and name bound to the address. The document is dated 2022 and live field drift is unverified.",
+      "kind": "api",
+      "gaps": [
+        "G17"
+      ],
+      "source_url": "https://github.com/ZeroBone/ScidApi/blob/master/APIDoc.MD"
+    },
+    {
+      "name": "fwastats-player",
+      "base": "https://fwastats.com",
+      "paths": [
+        "/Player/%TAG%"
+      ],
+      "auth": true,
+      "verified_how": "github-code-reference",
+      "date_checked": "2026-11-21",
+      "markers": [],
+      "js": false,
+      "blocked": false,
+      "notes": "class-level [Authorize] on PlayersController; %TAG% is bare, LinkIdToTag strips # and maps O->0; renders NameChange and TH-upgrade events",
+      "kind": "tracker",
+      "gaps": [
+        "G16"
+      ],
+      "source_url": "https://github.com/ptim74/fwastats/blob/master/src/FWAStatsWeb/Controllers/PlayersController.cs"
+    },
+    {
+      "name": "fwastats-data",
+      "base": "https://fwastats.com",
+      "paths": [
+        "/Clan/%TAG%/Members.json"
+      ],
+      "auth": false,
+      "json": true,
+      "verified_how": "github-code-reference",
+      "date_checked": "2026-11-21",
+      "markers": [],
+      "js": false,
+      "blocked": false,
+      "notes": "NO login: DataController has no class-level [Authorize], only Index() does. README's 'Data requires auth' is the docs page",
+      "kind": "api",
+      "gaps": [
+        "G04",
+        "G16"
+      ],
+      "source_url": "https://github.com/ptim74/fwastats/blob/master/src/FWAStatsWeb/Controllers/DataController.cs"
     }
-  },
-  {
-    "name": "clashking_docs",
-    "base": "https://api.clashk.ing",
-    "paths": [
-      "/openapi.json",
-      "/swagger/index.html"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "notes": "OpenAPI route inventory inspected in the saved research; documentation does not prove current live responses."
-  },
-  {
-    "name": "clashspot",
-    "base": "https://clashspot.net",
-    "paths": [
-      "/en/player/%TAG%/view",
-      "/en/player/%TAG%/war-attacks"
-    ],
-    "markers": [
-      "CW & CWL"
-    ],
-    "kind": "tracker",
-    "verified_how": "browser-403",
-    "date_checked": "2026-11-22",
-    "auth": false,
-    "js": false,
-    "blocked": false,
-    "source_url": "https://clashspot.net/en/player/GLLPPGL/ranked/seasons-history",
-    "gaps": [
-      "G16"
-    ],
-    "notes": "The supplied overview route and the observed CW/CWL navigation target returned 403. A separate profile page exposed ranked-season rows. The target payload, authentication requirement and JavaScript dependence are unconfirmed; false js/auth flags mean not positively established, not proof of absence. Do not bypass a denial."
-  },
-  {
-    "name": "clashofstats",
-    "base": "https://www.clashofstats.com",
-    "paths": [
-      "/players/%TAG%/history/log",
-      "/players/%TAG%/summary"
-    ],
-    "markers": [],
-    "kind": "tracker",
-    "verified_how": "unverified",
-    "date_checked": "2026-11-22",
-    "auth": false,
-    "js": false,
-    "blocked": false,
-    "gaps": [
-      "G16"
-    ],
-    "notes": "Candidate routes inherited from the supplied configuration. Web-reader requests were inaccessible; no payload or exact schema was observed. A clan-history log must not be presented as individual war-attack history. False js/auth flags are not positive verification."
-  },
-  {
-    "name": "clashninja",
-    "base": "https://www.clash.ninja",
-    "paths": [
-      "/stats-tracker/player/%TAG%"
-    ],
-    "markers": [],
-    "kind": "tracker",
-    "verified_how": "unverified",
-    "date_checked": "2026-11-22",
-    "auth": false,
-    "js": false,
-    "blocked": false,
-    "source_url": "https://www.clash.ninja/blog/introducing-the-stats-tracker",
-    "gaps": [
-      "G16"
-    ],
-    "notes": "Publisher launch article dated 2020-07-22 describes player/clan activity and war tracking. Current player route, access requirements and payload remain unconfirmed. Direct article open returned 403; dated publisher text was readable in search extraction."
-  },
-  {
-    "name": "clashinsight",
-    "base": "https://clashinsight.com",
-    "paths": [
-      "/player/%TAG%"
-    ],
-    "markers": [],
-    "kind": "tracker",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "auth": false,
-    "js": true,
-    "blocked": false,
-    "source_url": "https://clashinsight.com/player",
-    "gaps": [
-      "G16"
-    ],
-    "notes": "Indexed player profile describes stats and recorded attacks/defenses from ClashKing. The publisher states that recorded battles require JavaScript and public lookup needs no login. A direct sampled profile returned 503. Live war data and complete coverage remain unconfirmed."
-  },
-  {
-    "name": "fwacc",
-    "base": "https://cc.fwafarm.com",
-    "paths": [
-      "/cc_n/"
-    ],
-    "markers": [],
-    "kind": "tracker",
-    "verified_how": "browser-loads",
-    "date_checked": "2026-11-22",
-    "auth": false,
-    "js": false,
-    "blocked": true,
-    "source_url": "https://chocolateclash.com/cc_n/",
-    "gaps": [
-      "G04",
-      "G07",
-      "G08"
-    ],
-    "notes": "Only a Cloudflare access-denied page loaded in the saved browser research. No lookup was submitted and no player-result address was observed. This registry deliberately contains only the known index; no guessed PHP player endpoint. HTTP status and player payload remain unconfirmed. Stop at the access denial."
-  },
-  {
-    "name": "chocolateclash_notice",
-    "base": "https://chocolateclash.com",
-    "paths": [
-      "/cc_n/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "browser-loads",
-    "date_checked": "2026-11-22",
-    "auth": false,
-    "js": false,
-    "blocked": false,
-    "notes": "Maintainer retirement/migration notice was observed. It gives a shutdown date of 2025-01-01 and names the FWA-hosted successor. An Apr 6 non-FWA discontinuation update has no adjacent year; do not infer its year or every affected league.",
-    "source_date": "2025-01-01"
-  },
-  {
-    "name": "warreport",
-    "base": "https://warreport.app",
-    "paths": [
-      "/players/%TAG%"
-    ],
-    "markers": [],
-    "kind": "tracker",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "auth": false,
-    "js": true,
-    "blocked": false,
-    "source_url": "https://warreport.app/about/docs/features/embedding/",
-    "gaps": [
-      "G16"
-    ],
-    "notes": "Publisher documentation gives the players route pattern and says the service requires no account. The app requires JavaScript. A documented sample player fetch returned 404; current player output remains unconfirmed and that result does not prove all routes are dead."
-  },
-  {
-    "name": "warreport_docs",
-    "base": "https://warreport.app",
-    "paths": [
-      "/about/docs/features/players/",
-      "/about/docs/features/embedding/",
-      "/about/docs/faq/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "notes": "Publisher documents attacks/defenses, aggregates, prior clans and no-login access. These documents are not live player observations."
-  },
-  {
-    "name": "fwastats",
-    "base": "https://fwastats.com",
-    "paths": [
-      "/Players"
-    ],
-    "markers": [],
-    "kind": "tracker",
-    "verified_how": "browser-loads",
-    "date_checked": "2026-11-22",
-    "auth": true,
-    "js": false,
-    "blocked": false,
-    "source_url": "https://fwastats.com/Account/Login?ReturnUrl=/Players",
-    "gaps": [
-      "G16"
-    ],
-    "notes": "The Players entry redirected to a login form. It is a list/login entry, not a verified per-player URL. Authenticated player-history fields and any successor relationship to ChocolateClash remain unconfirmed. No authentication is automated."
-  },
-  {
-    "name": "kuilin",
-    "base": "https://kuilin.net",
-    "paths": [
-      "/cc_n/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "unverified",
-    "date_checked": "2026-11-22",
-    "auth": false,
-    "js": false,
-    "blocked": false,
-    "source_url": "https://chocolateclash.com/cc_n/",
-    "notes": "Earlier direct HTTP observation followed this exact legacy path to the ChocolateClash shutdown notice; fresh web-reader access was unavailable. No claim that all old paths redirect or that the entire site moved."
-  },
-  {
-    "name": "band",
-    "base": "https://band.us",
-    "paths": [
-      "/search/%TAG%"
-    ],
-    "markers": [],
-    "kind": "manual",
-    "verified_how": "unverified",
-    "date_checked": "2026-11-22",
-    "auth": false,
-    "js": false,
-    "blocked": false,
-    "gaps": [
-      "G01",
-      "G16"
-    ],
-    "notes": "Candidate manual search route was inaccessible. No public player payload, complete support transcript, private group access or sign-in was observed. Do not infer that this route currently works."
-  },
-  {
-    "name": "official_deeplink",
-    "base": "https://link.clashofclans.com",
-    "paths": [
-      "/en?action=OpenPlayerProfile&tag=%23%TAG%"
-    ],
-    "markers": [],
-    "kind": "manual",
-    "verified_how": "unverified",
-    "date_checked": "2026-11-22",
-    "auth": false,
-    "js": false,
-    "blocked": false,
-    "notes": "Supplied game-profile deep link. No game was launched and live behavior is unconfirmed. TAG excludes the leading hash; the template adds its encoding. Not a public ownership, Account Protection or war-history lookup."
-  },
-  {
-    "name": "egress_country",
-    "base": "https://ipapi.co",
-    "paths": [
-      "/json/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "json": true,
-    "auth": false,
-    "js": false,
-    "blocked": false,
-    "source_url": "https://ipapi.co/api/",
-    "schema": {
-      "/json/": {
-        "country_code": [
-          "country_code"
-        ]
-      }
-    },
-    "gaps": [
-      "G20"
-    ],
-    "notes": "Primary API documentation verified by the integration owner on 2026-11-22 describes a country_code field in JSON. No IP-geolocation result establishes where an account was created. Retain only the country code needed for the local consistency check, not a raw IP address."
-  },
-  {
-    "name": "official_lost_account",
-    "base": "https://support.supercell.com",
-    "paths": [
-      "/clash-of-clans/en/articles/ive-lost-access-to-my-account-2.html"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "gaps": [
-      "G01",
-      "G14",
-      "G15"
-    ],
-    "notes": "Saved research observed article text through public search extraction; direct opens had no readable body. Describes supported recovery routes and information to prepare, not a verified ordered chatbot dialogue. Publication/revision date unconfirmed."
-  },
-  {
-    "name": "official_player_tag",
-    "base": "https://support.supercell.com",
-    "paths": [
-      "/clash-of-clans/en/articles/player-tag.html"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "notes": "Saved research observed public article text: tag identifies the account but alone is insufficient for recovery. Publication/revision date unconfirmed."
-  },
-  {
-    "name": "official_account_index",
-    "base": "https://support.supercell.com",
-    "paths": [
-      "/clash-of-clans/en/account/index.html"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "gaps": [
-      "G15"
-    ],
-    "notes": "Account navigation/index text was observed in public search extraction. Not a recovery decision tree or internal lookup specification."
-  },
-  {
-    "name": "official_account_protection",
-    "base": "https://sc-clashofclans.zendesk.com",
-    "paths": [
-      "/hc/en-us/articles/54567842057755-Account-Protection"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "gaps": [
-      "G03",
-      "G06"
-    ],
-    "notes": "Saved public documentation describes SMS/recovery-code verification and feature unavailability in Belarus, Russia, China, Iran, Vietnam, Cuba and North Korea. It does not establish a universal country ban on every recovery route. No tag-only public protection-status lookup is documented in the observed article. Publication/revision date unconfirmed."
-  },
-  {
-    "name": "official_ap_announcement",
-    "base": "https://supercell.com",
-    "paths": [
-      "/en/games/clashofclans/blog/news/upcoming-scid-changes/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "source_date": "2022-12-09",
-    "notes": "Historical official launch announcement warns about simultaneously losing phone, email and recovery codes. Do not relabel this as a newly dated current rule or a regional test."
-  },
-  {
-    "name": "official_parents",
-    "base": "https://supercell.com",
-    "paths": [
-      "/en/parents/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "gaps": [
-      "G09"
-    ],
-    "notes": "Official parent guide describes support availability and supported languages. It supplies no measured language-specific queue advantage or best hour for recovery requests."
-  },
-  {
-    "name": "official_keep_safe",
-    "base": "https://sc-clashofclans.zendesk.com",
-    "paths": [
-      "/hc/en-us/articles/54567895884059-How-Can-I-Keep-My-Account-Safe"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "gaps": [
-      "G05"
-    ],
-    "notes": "Official guidance tells the actual player to contact support directly; attempting to recover another player account is described as phishing. The article does not specify one fixed helper-account penalty duration."
-  },
-  {
-    "name": "official_penalties",
-    "base": "https://sc-clashofclans.zendesk.com",
-    "paths": [
-      "/hc/en-us/articles/54577342797467-Account-Penalties-What-Are-They-and-When-Are-They-Used"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "gaps": [
-      "G05"
-    ],
-    "notes": "Observed official guidance describes penalties depending on severity or repetition. It does not disclose recovery answer thresholds or guarantee a 31-day security lock."
-  },
-  {
-    "name": "fwa_guide",
-    "base": "https://sites.google.com",
-    "paths": [
-      "/site/fwaguide/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "gaps": [
-      "G04"
-    ],
-    "notes": "FWA guide describes player flags/bans and clan association. It does not validate an exact current player endpoint or prove full war history."
-  },
-  {
-    "name": "gfl_historical_listing",
-    "base": "https://top.gg",
-    "paths": [
-      "/bot/966293804699238411"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "gaps": [
-      "G07"
-    ],
-    "notes": "Publisher listing references historical ChocolateClash use for several leagues. No active GFL-specific successor or current player payload was verified."
-  },
-  {
-    "name": "fwl_community_listing",
-    "base": "https://top.gg",
-    "paths": [
-      "/discord/servers/543749825481613324"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "gaps": [
-      "G08"
-    ],
-    "notes": "A public community listing mentions farm-war leagues but supplies no verified FWL tracker successor. Do not substitute an unrelated competitive league with the same initials."
-  },
-  {
-    "name": "historical_chocolate_client",
-    "base": "https://pkg.go.dev",
-    "paths": [
-      "/github.com/git-avilabs/chocolate-clash-go-api"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "github-code-reference",
-    "date_checked": "2026-11-22",
-    "source_date": "2023-08-16",
-    "gaps": [
-      "G07",
-      "G08"
-    ],
-    "notes": "Dated published client documentation is evidence of a historical client only. No client was installed or executed and no current endpoint was validated from it."
-  },
-  {
-    "name": "q_rejection",
-    "base": "https://www.reddit.com",
-    "paths": [
-      "/r/ClashOfClans/comments/1jtc7sb/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "source_date": "2025-04-07",
-    "gaps": [
-      "G01",
-      "G15"
-    ],
-    "notes": "Observed public report only. Earlier indexed author quotation of account-not-found/retry wording. Fresh date retrieval and original conversation authenticity remain unconfirmed. One fragment, not a full transcript."
-  },
-  {
-    "name": "q_spend",
-    "base": "https://www.reddit.com",
-    "paths": [
-      "/r/ClashOfClans/comments/1ravt7m/over_1000_spent_zero_help_from_support/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "source_date": "2026-02-21",
-    "gaps": [
-      "G02",
-      "G18"
-    ],
-    "notes": "Observed public report only. Author reports substantial spending, receipts and unsuccessful recovery. Spending, ownership, backend assessment and any spending threshold remain unconfirmed."
-  },
-  {
-    "name": "q_ban31",
-    "base": "https://www.reddit.com",
-    "paths": [
-      "/r/ClashOfClans/comments/1pnfko2/beware_of_vpn_usage_for_returning_players/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "source_date": "2025-12-15",
-    "gaps": [
-      "G05"
-    ],
-    "notes": "Observed public report only. Author reports a 31-day account-sharing suspension followed by a permanent suspension. Not a 31-day security lock. VPN causation and any universal penalty rule remain unconfirmed."
-  },
-  {
-    "name": "q_lock_recovered",
-    "base": "https://www.reddit.com",
-    "paths": [
-      "/r/ClashOfClans/comments/1u7h1nb/10_year_account_locked_need_help/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "source_date": "2026-06-16",
-    "gaps": [
-      "G05",
-      "G14"
-    ],
-    "notes": "Observed public report only. Author reports a security lock and an edited later recovery after roughly 24 hours. Exact edit date, human intervention, cause and a universal cooldown remain unconfirmed."
-  },
-  {
-    "name": "q_receipt_rejection",
-    "base": "https://www.reddit.com",
-    "paths": [
-      "/r/ClashOfClans/comments/1xzbqwq/need_help_with_coc_support/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "source_date": "2026-11-18",
-    "gaps": [
-      "G18"
-    ],
-    "notes": "Observed public report only. Author reports Apple receipt submission followed by rejection. Receipt validity, match, private checks and helper-account penalties remain unconfirmed."
-  },
-  {
-    "name": "q_rate_limit",
-    "base": "https://www.reddit.com",
-    "paths": [
-      "/r/COC/comments/1u0v3s9/stuck_in_automated_bot_loop_after_account_hack/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "source_date": "2026-06-09",
-    "gaps": [
-      "G01",
-      "G05"
-    ],
-    "notes": "Observed public report only. Author quotes a too-many-requests response. Threshold, timing window and exact preceding question remain unconfirmed."
-  },
-  {
-    "name": "q_handoff",
-    "base": "https://www.reddit.com",
-    "paths": [
-      "/r/ClashOfClans/comments/1k1pi2k/comment/mnpypnw/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "source_date": "2025-04-18",
-    "gaps": [
-      "G14"
-    ],
-    "notes": "Observed public report only. Comment contains a truncated agent-assignment phrase. Actual human assignment, preceding sequence and outcome remain unconfirmed."
-  },
-  {
-    "name": "q_phishing_incident",
-    "base": "https://www.reddit.com",
-    "paths": [
-      "/r/ClashOfClans/comments/1vy40n9/we_lost_4_accounts_and_our_entire_clan_during_a/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "source_date": "2026-08-25",
-    "gaps": [
-      "G05"
-    ],
-    "notes": "Observed public report only. Thread initially presents a recovery-code collection procedure as support; author later acknowledges apparent impersonation. Exclude from official recovery procedures and penalty evidence."
-  },
-  {
-    "name": "q_helper_historical",
-    "base": "https://www.reddit.com",
-    "paths": [
-      "/r/ClashOfClans/comments/owqyb7/"
-    ],
-    "markers": [],
-    "kind": "reference",
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-22",
-    "source_date": "2021-08-02",
-    "gaps": [
-      "G05"
-    ],
-    "notes": "Observed public report only. Historical first-person report of a 31-day contacting-account ban after attempting a friend account recovery. Outside the 2025-onward window; not current policy verification."
-  },
-  {
-    "name": "scid",
-    "base": "https://ingame.id.supercell.com",
-    "json": true,
-    "paths": [
-      "/api/account/login",
-      "/api/account/login.validate"
-    ],
-    "verified_how": "docs-page",
-    "date_checked": "2026-11-21",
-    "blocking": "yes",
-    "note": "form-encoded only; game=magic is CoC per the doc's own table; validate returns application.account/username = tag+name. Doc is 2022, drift unverified"
-  },
-  {
-    "name": "fwastats-player",
-    "base": "https://fwastats.com",
-    "paths": [
-      "/Player/%TAG%"
-    ],
-    "auth": true,
-    "verified_how": "github-code-reference",
-    "date_checked": "2026-11-21",
-    "note": "class-level [Authorize] on PlayersController; %TAG% is bare, LinkIdToTag strips # and maps O->0; renders NameChange and TH-upgrade events"
-  },
-  {
-    "name": "fwastats-data",
-    "base": "https://fwastats.com",
-    "paths": [
-      "/Clan/%TAG%/Members.json"
-    ],
-    "auth": false,
-    "json": true,
-    "verified_how": "github-code-reference",
-    "date_checked": "2026-11-21",
-    "note": "NO login: DataController has no class-level [Authorize], only Index() does. README's 'Data requires auth' is the docs page"
-  }
-]
+  ]
+}

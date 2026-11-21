@@ -19,14 +19,14 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-import random
-import sys
 
 OFFICIAL_API_BASE = "https://api.clashofclans.com/v1"
+SCID_API_BASE = "https://ingame.id.supercell.com/api"
 CLASHKING_API_BASE = "https://api.clashk.ing/v2"
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
-RETRY_STATUSES = frozenset({0, 429, 502, 503, 504})
+RETRY_STATUSES = frozenset(
+    {0, 408, 425, 429, 502, 503, 504, 520, 521, 522, 523, 524})
 MIN_SPACING = 0.4
 MAX_BODY = 8 * 1024 * 1024
 _request_lock = None
@@ -71,6 +71,11 @@ def raise_for_config() -> None:
 
 def quote(value: object) -> str:
     return urllib.parse.quote(str(value), safe="")
+
+
+def form(values: dict) -> str:
+    """Encode a form body; the only place form encoding is spelled out."""
+    return urllib.parse.urlencode(values)
 
 
 def add_query(url: str, values: dict) -> str:
@@ -264,89 +269,40 @@ def fetch(url, *, method="GET", headers=None, data=None, ttl=900,
     return response
 
 # --- clashking failover -----------------------------------------------------
-# api.clashk.ing is behind Cloudflare and returns 522 under load. A 522 is not
-# a dead account: retry it, then fail over to the official API. Redirects are
-# never followed off-host, because urllib would drop the bearer header on a
-# cross-host hop.
-CK = "https://api.clashk.ing"
-OFFICIAL = "https://api.clashofclans.com/v1"
-RETRYABLE = {408, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524}
-REDIRECT = {301, 302, 303, 307, 308}
-BACKOFF = (0.6, 1.5, 3.5)
-CK_COOLDOWN = 90.0
-
-_ck_slots = threading.BoundedSemaphore(2)   # clashlens caps at two; respect it
-_ck_until = [0.0]
-_ck_lock = threading.Lock()
+CLASHKING_COOLDOWN = 90.0
+CLASHKING_SLOTS = threading.BoundedSemaphore(2)
+_clashking_until = [0.0]
+_clashking_lock = threading.Lock()
 
 
-class OffHostRedirect(Exception):
-    pass
+def clashking_available() -> bool:
+    with _clashking_lock:
+        return time.monotonic() >= _clashking_until[0]
 
 
-class _SameHost(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        a = urllib.parse.urlsplit(req.full_url)
-        b = urllib.parse.urlsplit(newurl)
-        if a.netloc.lower() != b.netloc.lower():
-            return None          # None -> urllib raises HTTPError carrying the 3xx
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
+def _clashking_trip() -> None:
+    with _clashking_lock:
+        _clashking_until[0] = time.monotonic() + CLASHKING_COOLDOWN
 
 
-_opener = urllib.request.build_opener(_SameHost)
+def fetch_clashking(url, *, official_url=None, ttl=300, retries=2, timeout=20) -> Response:
+    """GET a ClashKing URL, retrying 522-class failures, then failing over.
 
-
-def _ck_up():
-    with _ck_lock:
-        return time.time() >= _ck_until[0]
-
-
-def _ck_trip():
-    with _ck_lock:
-        _ck_until[0] = time.time() + CK_COOLDOWN
-
-
-def _call(base, path, token, method="GET", body=None):
-    h = {"Accept": "application/json", "User-Agent": "coc-recover/1.0",
-         "Authorization": "Bearer " + token}
-    if body is not None:
-        h["Content-Type"] = "application/json"
-        body = json.dumps(body).encode()
-    last = None
-    for wait in (0.0,) + BACKOFF:
-        if wait:
-            time.sleep(wait + random.random() / 3)
-        try:
-            req = urllib.request.Request(base + path, data=body,
-                                         headers=h, method=method)
-            with _opener.open(req, timeout=20) as r:
-                return r.status, json.loads(r.read().decode() or "{}")
-        except urllib.error.HTTPError as e:
-            if e.code in REDIRECT:
-                raise OffHostRedirect("%s -> %s" % (path, e.headers.get("Location")))
-            if e.code in RETRYABLE:
-                last = e
-                continue
-            try:
-                return e.code, json.loads(e.read().decode() or "{}")
-            except Exception:
-                return e.code, {"ok": False, "error": "http_%s" % e.code}
-        except (urllib.error.URLError, TimeoutError, OSError) as e:
-            last = e
-            continue
-    raise last
-
-
-def get(path, token, allow_official=True):
-    """GET an official-shaped path, e.g. "/players/%23TAG"."""
-    if _ck_up():
-        with _ck_slots:
-            try:
-                return _call(CK, path, token)
-            except OffHostRedirect:
-                _ck_trip()
-            except Exception:
-                _ck_trip()
-    if not allow_official:
-        raise RuntimeError("clashking unavailable, failover disabled")
-    return _call(OFFICIAL, path, token)
+    The public host sits behind Cloudflare and answers 522 under load; a 522 is
+    not a dead account. After a retryable failure the host is parked for a
+    cooldown so later calls do not each rediscover the outage. Only an
+    official-shaped route has an official equivalent, so a history route returns
+    status 0 rather than a fabricated answer.
+    """
+    url = validate_url(url)
+    if not clashking_available():
+        if official_url is not None:
+            return fetch(validate_url(official_url), ttl=ttl, timeout=timeout)
+        return Response(0, "", False, "unreachable", 0.0, url, False)
+    with CLASHKING_SLOTS:
+        response = fetch(url, ttl=ttl, retries=retries, timeout=timeout)
+    if response.status in RETRY_STATUSES:
+        _clashking_trip()
+        if official_url is not None:
+            return fetch(validate_url(official_url), ttl=ttl, timeout=timeout)
+    return response

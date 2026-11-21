@@ -5,6 +5,7 @@ Importing this module performs no configuration checks, file access or requests.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 
 import coc_recover
@@ -18,9 +19,15 @@ def main(argv=None) -> int:
     report_parser.add_argument("tag")
     report_parser.add_argument("--open", action="store_true", dest="open_it")
     commands.add_parser("paste", help="Print the owner's evidence statement")
-    scid_parser = commands.add_parser("scid", help="Explain the manual Supercell ID sign-in step")
+    scid_parser = commands.add_parser("scid", help="Probe an address against the private Supercell ID routes")
     scid_parser.add_argument("email")
-    scid_parser.add_argument("--code", default=None, help="Ignored; enter inbox codes only in the game")
+    scid_parser.add_argument("--pin", "--code", dest="pin", default=None,
+                             help="six-digit inbox code; omit to only request it")
+    scid_parser.add_argument("--game", default=coc_recover.COC,
+                             choices=sorted(coc_recover.SCID_GAMES),
+                             help="game codename, default magic (Clash of Clans)")
+    scid_parser.add_argument("--json", action="store_true",
+                             help="machine-readable result only")
     verify_parser = commands.add_parser("verify", help="Explain the disabled token-verification operation")
     verify_parser.add_argument("tag")
     verify_parser.add_argument("token", help="Never sent, saved or echoed")
@@ -34,9 +41,12 @@ def main(argv=None) -> int:
         elif args.command == "paste":
             print(coc_recover.paste_block(coc_recover.load_profile()))
         elif args.command == "scid":
-            # gap:G17 This command does not call private Supercell ID APIs.
-            print(coc_recover.scid(args.email, args.code))
-            return 1
+            # gap:G17 Documented private routes; not a supported API.
+            result = coc_recover.scid(args.email, args.pin, args.game,
+                                      quiet=args.json)
+            if args.json:
+                print(json.dumps(result, indent=2, ensure_ascii=False))
+            return 0 if result["ok"] else 1
         elif args.command == "verify":
             # gap:G12 An unconfirmed verification route cannot assert ownership.
             print(coc_recover.verify(args.tag, args.token))

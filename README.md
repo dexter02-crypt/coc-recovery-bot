@@ -55,7 +55,7 @@ python support_driver.py --out transcript.md
 
 Replace `#YOUR_TAG` with your own tag. `report` collects public records, writes `dossier.json` and `dossier.md`, and fills only empty public identity fields in the profile; review those values yourself. Its `--open` flag opens the local Markdown dossier. `probe` records one unauthenticated observation per registered path in `probe_results.csv`, without following redirects or bypassing access gates. Its `--strict` mode exits 1 if any source is marked `unverified`; it is not a guarantee that every route works. `--write-sources` writes a separate `sources.live.json` containing usable paths while preserving existing flags and verification claims. `scrape` uses that derived registry when present, skips login/JavaScript/blocked sources, and writes `external.json`; an empty result can still exit successfully and does not prove there is no history. Use probe observations to inspect access limits. `readiness` compares the owner record with available live public identity and current egress-country evidence. The worksheet command writes local text only.
 
-Every network request is centralized in `net.fetch`. Public safe GET/HEAD requests can use the TTL cache keyed by method, URL and body. Authenticated requests and methods other than GET/HEAD bypass the shared cache. POSTs are not retried. Retries are limited to transport failures/status 0 and HTTP 429, 502, 503 and 504 for safe requests; other statuses are returned. Actual attempts are spaced at least 0.4 seconds apart. Redirects are disabled. An inaccessible page is not permission to evade its gate, and a sampled 404 or 503 does not establish that an entire service is permanently unavailable.
+Every network request is centralized in `net.fetch`; ClashKing history calls go through `net.fetch_clashking`, which retries and then parks the host. Public safe GET/HEAD requests can use the TTL cache keyed by method, URL and body. Authenticated requests and methods other than GET/HEAD bypass the shared cache. POSTs are not retried. Retries are limited to transport failures/status 0 and HTTP 408, 425, 429, 502, 503, 504 and the Cloudflare 520-524 range for safe requests; other statuses are returned. A 522 is an outage, not a dead account. Actual attempts are spaced at least 0.4 seconds apart. Redirects are disabled. An inaccessible page is not permission to evade its gate, and a sampled 404 or 503 does not establish that an entire service is permanently unavailable.
 
 Source addresses live in `sources.json`, apart from declared official API-base constants in `net.py`. Named references in these documents resolve through that registry. `%TAG%` means the normalized tag without its leading hash; a path containing `%23%TAG%` supplies the hash encoding itself. The source `date_checked` records the saved research check, not a new probe or a guarantee of availability today. A documented route, a working page, a login gate and a verified payload are different observations.
 
@@ -104,7 +104,7 @@ Allowed outcomes are `closed`, `locked`, `refused`, `recovered`, `abandoned` and
 
 `support_driver.py --force` prints an explicitly incomplete preview; it does not override readiness, clear a cooldown, submit a ticket or turn a blank into an answer. `--out` writes a private worksheet/record template; `--transcript` is its alias. The generated text is not a transcript of a conversation that happened. The tool does not verify that a claimed agent is human or guarantee a handoff.
 
-The `scid` and `verify` helpers are fail-closed manual guidance until supported endpoints, token types and response meaning are documented (G12/G17). Do not supply an inbox code to a CLI. The local `takeout` helper inventories owner-provided export metadata only; it does not obtain an export from an account. No Frida offsets or private endpoint guesses are included (G13).
+The `scid` command probes an address against the private Supercell ID routes (G17): documented, but not a supported API. `python coc.py scid you@example.com` requests the code; rerun with `--pin 123456` to read the reply. `login.validate` returns `isValid`, `isBound` and, when bound, `application.account` and `application.username` — the tag and name attached to that address, an email-to-tag join the owner does not have to supply. `binding_not_found` is the clean negative. Running `--pin` through to `confirm` exchanges the code for SCID tokens, so the code is spent for a game login afterwards. `--game` picks the codename (`magic` is Clash of Clans); `--json` prints the result only. The `verify` helper stays fail-closed (G12). The local `takeout` helper inventories owner-provided export metadata only; it does not obtain an export from an account. No Frida offsets or private endpoint guesses are included (G13).
 
 ## Dating: preserve what the evidence can actually say
 
@@ -144,7 +144,7 @@ Every unresolved gap appears below and in `gaps.csv`. “Blocking” controls or
 
 | File | Responsibility |
 |---|---|
-| `net.py` | Lazy configuration, centralized HTTP, safe retry/spacing behavior and SQLite TTL cache. |
+| `net.py` | Lazy configuration, centralized HTTP, safe retry/spacing behavior, SQLite TTL cache and ClashKing retry/cooldown. |
 | `coc.py` | Public report and local dossier CLI; fail-closed helper entry points. |
 | `coc_recover.py` | Lazy profile/source loading and shared preparation helpers. |
 | `readiness.py` | Weighted completeness checks and independent blockers. |
@@ -163,3 +163,5 @@ Every unresolved gap appears below and in `gaps.csv`. “Blocking” controls or
 | `research_prompt.md` | Reusable instructions for closing the research gaps honestly. |
 
 The delivered revision passed **149 offline checks** on Python 3.12.14. The suite also parses every module using the Python 3.9 grammar; a native Python 3.9 interpreter was unavailable in the build environment. See the Offline verification table in `report.md` for the observed commands and limits. Passing fixtures does not verify an authenticated API response, a blocked tracker, support-question order, recovery eligibility or account ownership. No account recovery or ticket submission is part of the test suite.
+
+`tools/` is repository scaffolding, not part of the 17-file distribution.
