@@ -3,3 +3,12 @@ __pycache__/
 *.sqlite
 .env
 logs/
+coc-recover.zip
+dossier.json
+dossier.md
+external.json
+probe_results.csv
+sources.live.json
+takeout_index.json
+attempts.json
+.attempts.lock

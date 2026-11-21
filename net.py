@@ -1,7 +1,9 @@
 """Single HTTP transport. Exit codes: 0 when run directly; callers map ConfigError to 2.
 
-Importing this module performs no I/O. Redirects are not followed. Only public
-GET/HEAD responses are cached; authenticated and modifying requests bypass cache.
+Importing this module performs no I/O. Redirects are not followed, so a bearer
+header is never forwarded across hosts. Only public GET/HEAD responses are
+cached; authenticated and modifying requests bypass the cache. POSTs are never
+retried. Everything leaves through one paced function.
 """
 from __future__ import annotations
 
@@ -19,16 +21,19 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-import random
-import sys
 
 OFFICIAL_API_BASE = "https://api.clashofclans.com/v1"
 CLASHKING_API_BASE = "https://api.clashk.ing/v2"
+SCID_API_BASE = "https://ingame.id.supercell.com/api"
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
-RETRY_STATUSES = frozenset({0, 429, 502, 503, 504})
+RETRY_STATUSES = frozenset({0, 429, 502, 503, 504, 520, 521, 522, 523, 524})
 MIN_SPACING = 0.4
 MAX_BODY = 8 * 1024 * 1024
+CK_COOLDOWN = 90.0
+_ck_slots = threading.BoundedSemaphore(2)
+_ck_until = [0.0]
+_ck_lock = threading.Lock()
 _request_lock = None
 _last_request_at = None
 
@@ -263,90 +268,86 @@ def fetch(url, *, method="GET", headers=None, data=None, ttl=900,
         _save_cache(key, status, body, final_url)
     return response
 
-# --- clashking failover -----------------------------------------------------
-# api.clashk.ing is behind Cloudflare and returns 522 under load. A 522 is not
-# a dead account: retry it, then fail over to the official API. Redirects are
-# never followed off-host, because urllib would drop the bearer header on a
-# cross-host hop.
-CK = "https://api.clashk.ing"
-OFFICIAL = "https://api.clashofclans.com/v1"
-RETRYABLE = {408, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524}
-REDIRECT = {301, 302, 303, 307, 308}
-BACKOFF = (0.6, 1.5, 3.5)
-CK_COOLDOWN = 90.0
 
-_ck_slots = threading.BoundedSemaphore(2)   # clashlens caps at two; respect it
-_ck_until = [0.0]
-_ck_lock = threading.Lock()
+def _json_or(response) -> dict:
+    try:
+        value = json.loads(response.body or "{}")
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "http_%s" % response.status}
+    if not isinstance(value, dict):
+        return {"ok": False, "error": "http_%s" % response.status}
+    return value
 
 
-class OffHostRedirect(Exception):
-    pass
-
-
-class _SameHost(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):
-        a = urllib.parse.urlsplit(req.full_url)
-        b = urllib.parse.urlsplit(newurl)
-        if a.netloc.lower() != b.netloc.lower():
-            return None          # None -> urllib raises HTTPError carrying the 3xx
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
-
-
-_opener = urllib.request.build_opener(_SameHost)
-
-
-def _ck_up():
+def _ck_up() -> bool:
     with _ck_lock:
         return time.time() >= _ck_until[0]
 
 
-def _ck_trip():
+def _ck_trip() -> None:
     with _ck_lock:
         _ck_until[0] = time.time() + CK_COOLDOWN
 
 
-def _call(base, path, token, method="GET", body=None):
-    h = {"Accept": "application/json", "User-Agent": "coc-recover/1.0",
-         "Authorization": "Bearer " + token}
-    if body is not None:
-        h["Content-Type"] = "application/json"
-        body = json.dumps(body).encode()
-    last = None
-    for wait in (0.0,) + BACKOFF:
-        if wait:
-            time.sleep(wait + random.random() / 3)
-        try:
-            req = urllib.request.Request(base + path, data=body,
-                                         headers=h, method=method)
-            with _opener.open(req, timeout=20) as r:
-                return r.status, json.loads(r.read().decode() or "{}")
-        except urllib.error.HTTPError as e:
-            if e.code in REDIRECT:
-                raise OffHostRedirect("%s -> %s" % (path, e.headers.get("Location")))
-            if e.code in RETRYABLE:
-                last = e
-                continue
-            try:
-                return e.code, json.loads(e.read().decode() or "{}")
-            except Exception:
-                return e.code, {"ok": False, "error": "http_%s" % e.code}
-        except (urllib.error.URLError, TimeoutError, OSError) as e:
-            last = e
-            continue
-    raise last
+def _official_equivalent(path: str) -> Optional[str]:
+    """Translate the one ClashKing player route that also exists officially."""
+    head, separator, tail = path.partition("?")
+    parts = head.strip("/").split("/")
+    if len(parts) == 2 and parts[0] == "player":
+        return "/players/" + parts[1] + (separator + tail if separator else "")
+    return None
 
 
-def get(path, token, allow_official=True):
-    """GET an official-shaped path, e.g. "/players/%23TAG"."""
+def api_get(path, token, base=CLASHKING_API_BASE, allow_official=True):
+    """Authenticated GET with ClashKing-first failover; return (status, payload).
+
+    A retryable or unreachable ClashKing result trips a local cooldown. Only the
+    routes with an official equivalent are repeated on the official API; the rest
+    return a local error object instead of a fabricated status. ClashKing answers
+    of 401/403/404 are treated as real answers, not as outages.
+    """
+    headers = {"Authorization": "Bearer " + token} if token else {}
     if _ck_up():
         with _ck_slots:
-            try:
-                return _call(CK, path, token)
-            except OffHostRedirect:
-                _ck_trip()
-            except Exception:
-                _ck_trip()
+            response = fetch(base.rstrip("/") + path, headers=headers, ttl=0, retries=2)
+        if response.ok or response.status in {401, 403, 404}:
+            return response.status, _json_or(response)
+        _ck_trip()
+        if not allow_official:
+            raise RuntimeError("clashking unavailable, failover disabled")
+        equivalent = _official_equivalent(path)
+        if equivalent is None:
+            return response.status, {"ok": False, "error": "clashking_unavailable"}
+        fallback = fetch(OFFICIAL_API_BASE + equivalent, headers=headers, ttl=0, retries=2)
+        return fallback.status, _json_or(fallback)
     if not allow_official:
-        raise RuntimeError("clashking unavailable, failover disabled")
-    return _call(OFFICIAL, path, token)
+        raise RuntimeError("clashking cooling down, failover disabled")
+    equivalent = _official_equivalent(path) or path
+    fallback = fetch(OFFICIAL_API_BASE + equivalent, headers=headers, ttl=0, retries=2)
+    return fallback.status, _json_or(fallback)
+
+
+def scid_post(path, form, token=None, timeout=25) -> dict:
+    """POST form data to the unsupported SCID helper base; return the JSON object.
+
+    Gap G17: the route set is undocumented, so a non-JSON or non-object body
+    becomes a local error object rather than an exception.
+    """
+    headers = {"Accept": "application/json",
+               "Content-Type": "application/x-www-form-urlencoded"}
+    if token:
+        headers["Authorization"] = "Bearer " + token
+    body = urllib.parse.urlencode(
+        {key: value for key, value in form.items() if value is not None}).encode("utf-8")
+    status, text, _ = _paced_request(validate_url(SCID_API_BASE + path), "POST",
+                                     headers, body, timeout)
+    if status == 0:
+        return {"ok": False, "error": "transport"}
+    try:
+        value = json.loads(text or "{}")
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "http_%s" % status}
+    if not isinstance(value, dict):
+        return {"ok": False, "error": "http_%s" % status}
+    value.setdefault("ok", 200 <= status < 300)
+    return value
