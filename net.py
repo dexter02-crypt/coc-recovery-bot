@@ -1,0 +1,352 @@
+"""Single HTTP transport. Exit codes: 0 when run directly; callers map ConfigError to 2.
+
+Importing this module performs no I/O. Redirects are not followed. Only public
+GET/HEAD responses are cached; authenticated and modifying requests bypass cache.
+"""
+from __future__ import annotations
+
+import hashlib
+import http.client
+import json
+import os
+import re
+import sqlite3
+import threading
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
+import random
+import sys
+
+OFFICIAL_API_BASE = "https://api.clashofclans.com/v1"
+CLASHKING_API_BASE = "https://api.clashk.ing/v2"
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+RETRY_STATUSES = frozenset({0, 429, 502, 503, 504})
+MIN_SPACING = 0.4
+MAX_BODY = 8 * 1024 * 1024
+_request_lock = None
+_last_request_at = None
+
+
+class ConfigError(ValueError):
+    """A required configuration value is missing or malformed."""
+
+
+@dataclass
+class Response:
+    status: int
+    body: str
+    ok: bool
+    verdict: str
+    elapsed: float
+    url: str
+    cached: bool
+
+
+def validate_url(url: str) -> str:
+    parts = urllib.parse.urlsplit(str(url))
+    if parts.scheme not in {"http", "https"} or not parts.hostname:
+        raise ConfigError("Source must be an absolute HTTP(S) URL")
+    if parts.username or parts.password or parts.fragment:
+        raise ConfigError("Credentials and fragments are not allowed in source URLs")
+    return str(url)
+
+
+def raise_for_config() -> None:
+    """Require explicitly configured API base and token, without exposing either."""
+    missing = [key for key in ("COC_API_BASE", "COC_API_TOKEN")
+               if not os.environ.get(key, "").strip()]
+    if missing:
+        raise ConfigError("Unset configuration: " + ", ".join(missing))
+    base = validate_url(os.environ["COC_API_BASE"].strip())
+    parts = urllib.parse.urlsplit(base)
+    if parts.scheme != "https" or parts.query:
+        raise ConfigError("COC_API_BASE must use HTTPS without a query")
+
+
+def quote(value: object) -> str:
+    return urllib.parse.quote(str(value), safe="")
+
+
+def add_query(url: str, values: dict) -> str:
+    filtered = [(key, value) for key, value in values.items() if value is not None]
+    if not filtered:
+        return url
+    return url + ("&" if "?" in url else "?") + urllib.parse.urlencode(filtered, doseq=True)
+
+
+def _encode(data) -> Optional[bytes]:
+    if data is None:
+        return None
+    if isinstance(data, bytes):
+        return data
+    if isinstance(data, str):
+        return data.encode("utf-8")
+    return json.dumps(data, sort_keys=True, separators=(",", ":"),
+                      ensure_ascii=False, allow_nan=False).encode("utf-8")
+
+
+def _cache_path() -> Path:
+    configured = os.environ.get("COC_CACHE_PATH")
+    return (Path(configured).expanduser() if configured else
+            Path.home() / ".cache" / "coc-recover" / "cache.sqlite3")
+
+
+def _cache_connection():
+    path = _cache_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(str(path), timeout=5)
+    connection.execute("CREATE TABLE IF NOT EXISTS responses ("
+                       "method TEXT, url TEXT, body_key TEXT, status INTEGER, "
+                       "body TEXT, final_url TEXT, created REAL, "
+                       "PRIMARY KEY(method,url,body_key))")
+    return connection
+
+
+def _cached(key, ttl):
+    try:
+        connection = _cache_connection()
+        try:
+            row = connection.execute(
+                "SELECT status,body,final_url,created FROM responses "
+                "WHERE method=? AND url=? AND body_key=?", key).fetchone()
+        finally:
+            connection.close()
+        if row and 0 <= time.time() - row[3] < ttl:
+            return row[:3]
+    except (OSError, sqlite3.Error):
+        pass
+    return None
+
+
+def _save_cache(key, status, body, final_url):
+    try:
+        connection = _cache_connection()
+        try:
+            with connection:
+                connection.execute("INSERT OR REPLACE INTO responses VALUES(?,?,?,?,?,?,?)",
+                                   (*key, status, body, final_url, time.time()))
+        finally:
+            connection.close()
+    except (OSError, sqlite3.Error):
+        pass
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def _request_once(url, method, headers, data, timeout):
+    """The only actual HTTP operation; return status, text and final URL."""
+    request = urllib.request.Request(url, data=data, headers=headers, method=method)
+    opener = urllib.request.build_opener(_NoRedirect())
+    try:
+        with opener.open(request, timeout=timeout) as response:
+            raw = response.read(MAX_BODY + 1)
+            if len(raw) > MAX_BODY:
+                return 413, "Response exceeded the local size limit", url
+            charset = response.headers.get_content_charset() or "utf-8"
+            try:
+                text = raw.decode(charset, errors="replace")
+            except LookupError:
+                text = raw.decode("utf-8", errors="replace")
+            return response.status, text, response.geturl()
+    except urllib.error.HTTPError as error:
+        try:
+            try:
+                body = error.read(MAX_BODY).decode("utf-8", errors="replace")
+            except (OSError, http.client.HTTPException):
+                # Preserve a known status: even a truncated 404 must never retry.
+                body = ""
+        finally:
+            error.close()
+        return error.code, body, url
+    except (urllib.error.URLError, OSError, TimeoutError, http.client.HTTPException):
+        return 0, "", url
+
+
+def _paced_request(url, method, headers, data, timeout):
+    global _request_lock, _last_request_at
+    if _request_lock is None:
+        _request_lock = threading.Lock()
+    with _request_lock:
+        now = time.monotonic()
+        if _last_request_at is not None:
+            wait = MIN_SPACING - (now - _last_request_at)
+            if wait > 0:
+                time.sleep(wait)
+        _last_request_at = time.monotonic()
+        return _request_once(url, method, headers, data, timeout)
+
+
+def classify(src, resp) -> str:
+    """Return one of the nine public-source classification labels."""
+    if resp.status == 0:
+        return "unreachable"
+    if resp.status in {403, 429}:
+        return "blocked"
+    if resp.status in {404, 410}:
+        return "gone"
+    if resp.status == 401:
+        return "auth"
+    low = (resp.body or "").lower()
+    if src.get("auth") and (200 <= resp.status < 400):
+        return "auth"
+    if not 200 <= resp.status < 300 or not low.strip():
+        return "empty"
+    if src.get("json"):
+        try:
+            json.loads(resp.body)
+        except (TypeError, ValueError):
+            return "badjson"
+        return "ok"
+    password_input = re.search(r"<input\b[^>]*\btype\s*=\s*(?:['\"]password['\"]|password\b)", low)
+    if password_input and any(text in low for text in ("login", "log in", "sign in")):
+        return "auth"
+    markers = src.get("markers") or []
+    hit = any(str(marker).lower() in low for marker in markers if str(marker))
+    if src.get("js"):
+        return "ok-js" if hit or "javascript" in low else "unmarked"
+    return "ok" if hit else "unmarked"
+
+
+def fetch(url, *, method="GET", headers=None, data=None, ttl=900,
+          timeout=20, retries=3) -> Response:
+    """Fetch through one paced path; retries counts additional safe attempts."""
+    started = time.monotonic()
+    url = validate_url(url)
+    method = str(method).upper()
+    if method not in {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}:
+        raise ValueError("Unsupported HTTP method")
+    if timeout <= 0 or type(retries) is not int or retries < 0:
+        raise ValueError("timeout must be positive and retries must be a non-negative integer")
+    supplied = {str(key): str(value) for key, value in (headers or {}).items()}
+    lowered = {key.lower(): value for key, value in supplied.items()}
+    outgoing = {"User-Agent": UA, "Accept": "application/json,text/html;q=0.9",
+                "Accept-Language": "en-US,en;q=0.8"}
+    outgoing.update(supplied)
+    payload = _encode(data)
+    if data is not None and not isinstance(data, (bytes, str)) and "content-type" not in lowered:
+        outgoing["Content-Type"] = "application/json"
+    query_keys = {key.lower() for key, _ in urllib.parse.parse_qsl(urllib.parse.urlsplit(url).query)}
+    secret_keys = {"token", "code", "email", "password", "key", "api_key", "receipt-data"}
+    cacheable = (method in {"GET", "HEAD"} and ttl > 0 and
+                 not ({"authorization", "cookie", "proxy-authorization"} & set(lowered)) and
+                 not (secret_keys & query_keys))
+    key = (method, url, hashlib.sha256(payload or b"").hexdigest())
+    if cacheable:
+        row = _cached(key, ttl)
+        if row:
+            status, body, final_url = row
+            response = Response(status, body, True, "ok", time.monotonic() - started,
+                                final_url, True)
+            return response
+    count = int(retries) if method in {"GET", "HEAD"} else 0
+    status, body, final_url = 0, "", url
+    for attempt in range(count + 1):
+        status, body, final_url = _paced_request(url, method, outgoing, payload, timeout)
+        if status not in RETRY_STATUSES or attempt == count:
+            break
+        time.sleep(2 ** attempt)
+    ok = 200 <= status < 300
+    response = Response(int(status), str(body), ok, "ok" if ok else "empty",
+                        max(0.0, time.monotonic() - started), str(final_url), False)
+    if not ok:
+        response.verdict = classify({}, response)
+    if cacheable and ok:
+        _save_cache(key, status, body, final_url)
+    return response
+
+# --- clashking failover -----------------------------------------------------
+# api.clashk.ing is behind Cloudflare and returns 522 under load. A 522 is not
+# a dead account: retry it, then fail over to the official API. Redirects are
+# never followed off-host, because urllib would drop the bearer header on a
+# cross-host hop.
+CK = "https://api.clashk.ing"
+OFFICIAL = "https://api.clashofclans.com/v1"
+RETRYABLE = {408, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524}
+REDIRECT = {301, 302, 303, 307, 308}
+BACKOFF = (0.6, 1.5, 3.5)
+CK_COOLDOWN = 90.0
+
+_ck_slots = threading.BoundedSemaphore(2)   # clashlens caps at two; respect it
+_ck_until = [0.0]
+_ck_lock = threading.Lock()
+
+
+class OffHostRedirect(Exception):
+    pass
+
+
+class _SameHost(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        a = urllib.parse.urlsplit(req.full_url)
+        b = urllib.parse.urlsplit(newurl)
+        if a.netloc.lower() != b.netloc.lower():
+            return None          # None -> urllib raises HTTPError carrying the 3xx
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_opener = urllib.request.build_opener(_SameHost)
+
+
+def _ck_up():
+    with _ck_lock:
+        return time.time() >= _ck_until[0]
+
+
+def _ck_trip():
+    with _ck_lock:
+        _ck_until[0] = time.time() + CK_COOLDOWN
+
+
+def _call(base, path, token, method="GET", body=None):
+    h = {"Accept": "application/json", "User-Agent": "coc-recover/1.0",
+         "Authorization": "Bearer " + token}
+    if body is not None:
+        h["Content-Type"] = "application/json"
+        body = json.dumps(body).encode()
+    last = None
+    for wait in (0.0,) + BACKOFF:
+        if wait:
+            time.sleep(wait + random.random() / 3)
+        try:
+            req = urllib.request.Request(base + path, data=body,
+                                         headers=h, method=method)
+            with _opener.open(req, timeout=20) as r:
+                return r.status, json.loads(r.read().decode() or "{}")
+        except urllib.error.HTTPError as e:
+            if e.code in REDIRECT:
+                raise OffHostRedirect("%s -> %s" % (path, e.headers.get("Location")))
+            if e.code in RETRYABLE:
+                last = e
+                continue
+            try:
+                return e.code, json.loads(e.read().decode() or "{}")
+            except Exception:
+                return e.code, {"ok": False, "error": "http_%s" % e.code}
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            last = e
+            continue
+    raise last
+
+
+def get(path, token, allow_official=True):
+    """GET an official-shaped path, e.g. "/players/%23TAG"."""
+    if _ck_up():
+        with _ck_slots:
+            try:
+                return _call(CK, path, token)
+            except OffHostRedirect:
+                _ck_trip()
+            except Exception:
+                _ck_trip()
+    if not allow_official:
+        raise RuntimeError("clashking unavailable, failover disabled")
+    return _call(OFFICIAL, path, token)
