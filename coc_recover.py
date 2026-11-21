@@ -2,6 +2,7 @@
 
 Import is inert. Live CLI commands are dispatched by coc.py. Public records are
 corroboration, never proof that the person running this program owns a village.
+All HTTP leaves through net.
 """
 from __future__ import annotations
 
@@ -22,6 +23,9 @@ TEMPLATE = {"tag": "", "name": "", "th": "", "xp": "", "clan": "", "date": "",
             "email_new": "", "ap": "unknown", "receipts": [], "names": [], "notes": ""}
 SOURCE_METHODS = {"browser-loads", "browser-403", "docs-page",
                   "github-code-reference", "unverified"}
+COC = "magic"
+SCID_GAMES = {"magic": "Clash of Clans", "scroll": "Clash Royale",
+              "laser": "Brawl Stars", "soil": "Hay Day", "reef": "Boom Beach"}
 
 
 def data_dir() -> Path:
@@ -81,15 +85,21 @@ def save_profile(prof, path=None) -> None:
 
 
 def load_sources(path=None) -> dict:
+    """Load the registry; a bare array is accepted as shorthand for {"sources": [...]}."""
     target = Path(path) if path is not None else data_dir() / "sources.json"
     with target.open(encoding="utf-8") as stream:
         config = json.load(stream)
+    if isinstance(config, list):
+        config = {"sources": config}
     if not isinstance(config, dict) or not isinstance(config.get("sources"), list):
         raise net.ConfigError("sources.json requires a sources array")
     seen = set()
     for source in config["sources"]:
+        if not isinstance(source, dict):
+            raise net.ConfigError("Incomplete source entry")
+        source.setdefault("markers", [])
         required = {"name", "base", "paths", "markers", "verified_how", "date_checked"}
-        if not isinstance(source, dict) or not required <= set(source):
+        if not required <= set(source):
             raise net.ConfigError("Incomplete source entry")
         name = source["name"]
         if not isinstance(name, str) or not name or name in seen:
@@ -121,7 +131,8 @@ def get_source(name, config=None) -> dict:
     raise net.ConfigError("Missing source: " + str(name))
 
 
-def expand_source(source, path_index=0, **values) -> str:
+def _relative(source, path_index=0, **values) -> str:
+    """Expand placeholders into a base-relative path, refusing unfilled ones."""
     paths = source.get("paths") or []
     if path_index < 0 or path_index >= len(paths):
         raise net.ConfigError("Source has no requested path")
@@ -130,7 +141,11 @@ def expand_source(source, path_index=0, **values) -> str:
         path = path.replace("%" + str(key).upper() + "%", net.quote(value))
     if re.search(r"%[A-Z_]+%", path):
         raise net.ConfigError("Unfilled source URL placeholder")
-    return net.validate_url(source["base"].rstrip("/") + path)
+    return path
+
+
+def expand_source(source, path_index=0, **values) -> str:
+    return net.validate_url(source["base"].rstrip("/") + _relative(source, path_index, **values))
 
 
 def source_url(name, path_index=0, **values) -> str:
@@ -166,14 +181,19 @@ def official(tag) -> Optional[dict]:
 
 
 def ck(tag, path, **q) -> Optional[dict]:
+    """Read one registered history route, failing over where an official route exists."""
     source = get_source("clashking")
     suffix = "/" + str(path).strip("/")
     index = next((i for i, p in enumerate(source["paths"]) if p.endswith(suffix)), None)
     if index is None:
         # gap:G16 New history routes need documented coverage and schema.
         raise net.ConfigError("ClashKing path is not registered in sources.json")
-    url = expand_source(source, index, TAG=normalize_tag(tag)[1:])
-    return _json_response(net.fetch(net.add_query(url, q)))
+    relative = net.add_query(_relative(source, index, TAG=normalize_tag(tag)[1:]), q)
+    token = os.environ.get("COC_API_TOKEN", "").strip()
+    status, payload = net.api_get(relative, token, base=source["base"])
+    if status and not 200 <= status < 300:
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def parse_changes(items) -> list[dict]:
@@ -428,43 +448,25 @@ def report(tag, open_it=False) -> str:
     return text + "\nStill owner-supplied: " + ", ".join(missing) + "\n"
 
 
-COC = "magic"
-SCID_GAMES = {"magic": "Clash of Clans", "scroll": "Clash Royale",
-              "laser": "Brawl Stars", "soil": "Hay Day", "reef": "Boom Beach"}
-
-
-def _scid_post(path, form, token=None):
-    headers = {"Content-Type": "application/x-www-form-urlencoded",
-               "Accept": "application/json"}
-    if token:
-        headers["Authorization"] = "Bearer " + token
-    response = net.fetch(net.SCID_API_BASE + path, method="POST",
-                         headers=headers, data=net.form(form), ttl=0, timeout=25)
-    try:
-        payload = json.loads(response.body or "{}")
-    except (TypeError, ValueError):
-        return {"ok": False, "error": "http_%s" % response.status
-                if response.status else "transport"}
-    return payload if isinstance(payload, dict) else {"ok": False, "error": "badjson"}
-
-
-def _data(r):
+def _data(r) -> dict:
     d = r.get("data")
     return d if isinstance(d, dict) else {}
 
 
 def scid(email, pin=None, game=COC, lang="en", quiet=False):
-    """Probe an email against Supercell ID and report the bound tag.
+    """Probe an address against Supercell ID and report the bound tag.
 
-    Returns {"email","game","stage","ok","error","isValid","isBound","tag",
-    "name","scid","created","links"}. login alone only proves the address is
+    gap:G17 The route set is undocumented. login alone only proves the address is
     accepted; tag and name come back from login.validate, and only if isBound.
+    Returns {"email","game","stage","ok","error","isValid","isBound","tag","name",
+    "scid","created","links"}. No code is written to disk.
     """
     out = {"email": email, "game": game, "stage": "login", "ok": False,
-           "error": None, "tag": None, "name": None, "created": None}
+           "error": None, "isValid": None, "isBound": None, "tag": None,
+           "name": None, "created": None}
     base = {"email": email, "env": "prod", "game": game, "lang": lang}
 
-    r = _scid_post("/account/login", base)
+    r = net.scid_post("/account/login", base)
     if not r.get("ok"):
         out["error"] = r.get("error") or "unknown"
         if not quiet:
@@ -480,12 +482,12 @@ def scid(email, pin=None, game=COC, lang="en", quiet=False):
             print("code sent to %s - rerun with --pin" % email)
         return out
 
-    # doc specifies email+pin only here; game context is undocumented, so try
-    # minimal first and only widen if the minimal body is rejected
+    # The documented body is email+pin only; game context is undocumented, so try
+    # the minimal body first and widen only if it is rejected.
     out["stage"] = "validate"
-    v = _scid_post("/account/login.validate", {"email": email, "pin": pin})
+    v = net.scid_post("/account/login.validate", {"email": email, "pin": pin})
     if not v.get("ok"):
-        v = _scid_post("/account/login.validate", dict(base, pin=pin))
+        v = net.scid_post("/account/login.validate", dict(base, pin=pin))
     if not quiet:
         print("validate:", json.dumps(v, indent=2)[:1200])
 
@@ -507,9 +509,9 @@ def scid(email, pin=None, game=COC, lang="en", quiet=False):
         return out
 
     out["stage"] = "confirm"
-    c = _scid_post("/account/login.confirm", {"email": email, "pin": pin})
+    c = net.scid_post("/account/login.confirm", {"email": email, "pin": pin})
     if not c.get("ok"):
-        c = _scid_post("/account/login.confirm", dict(base, pin=pin))
+        c = net.scid_post("/account/login.confirm", dict(base, pin=pin))
     cd = _data(c)
     tok = cd.get("scid")
     if not tok:
@@ -520,20 +522,18 @@ def scid(email, pin=None, game=COC, lang="en", quiet=False):
         print("\nscid:", tok[:40] + "...")
 
     hdr = {"scid_token": cd.get("scidToken", "")}
-    s = _scid_post("/account/settings.get", hdr, token=tok)
+    s = net.scid_post("/account/settings.get", hdr, token=tok)
     out["created"] = _data(s).get("created")
     if out["created"] and not quiet:
         print("SCID CREATED: " + out["created"])
 
-    l = _scid_post("/account/links.get", hdr, token=tok)
+    l = net.scid_post("/account/links.get", hdr, token=tok)
     links = _data(l).get("links")
     if isinstance(links, list):
         out["links"] = [x.get("system") for x in links if isinstance(x, dict)]
         if not quiet:
             print("links:", out["links"])
     return out
-
-
 
 
 def verify(tag, token) -> str:

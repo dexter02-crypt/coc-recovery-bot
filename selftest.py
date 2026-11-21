@@ -816,6 +816,8 @@ def _run(root: Path, suite: Suite, temp: Path) -> None:
     config = json.loads((root / "sources.json").read_text(encoding="utf-8"))
     if isinstance(config, list):
         config = {"sources": config}
+    if isinstance(config, list):
+        config = {"sources": config}
     obstacles = json.loads((root / "obstacles.json").read_text(encoding="utf-8"))
     template = json.loads((root / "profile.json").read_text(encoding="utf-8"))
     with (root / "gaps.csv").open(encoding="utf-8-sig", newline="") as handle:
