@@ -23,6 +23,7 @@ TEMPLATE = {"tag": "", "name": "", "th": "", "xp": "", "clan": "", "date": "",
             "email_new": "", "ap": "unknown", "receipts": [], "names": [], "notes": ""}
 SOURCE_METHODS = {"browser-loads", "browser-403", "docs-page",
                   "github-code-reference", "unverified"}
+TAG_KINDS = {"player", "clan"}
 COC = "magic"
 SCID_GAMES = {"magic": "Clash of Clans", "scroll": "Clash Royale",
               "laser": "Brawl Stars", "soil": "Hay Day", "reef": "Boom Beach"}
@@ -121,6 +122,8 @@ def load_sources(path=None) -> dict:
         for flag in ("json", "js", "auth", "blocked"):
             if flag in source and not isinstance(source[flag], bool):
                 raise net.ConfigError("Source flags must be boolean")
+        if "tag_kind" in source and source["tag_kind"] not in TAG_KINDS:
+            raise net.ConfigError("Source tag_kind must be player or clan")
     return config
 
 
@@ -146,6 +149,17 @@ def _relative(source, path_index=0, **values) -> str:
 
 def expand_source(source, path_index=0, **values) -> str:
     return net.validate_url(source["base"].rstrip("/") + _relative(source, path_index, **values))
+
+
+def expand_for(source, path_index=0, tag=None, clan=None) -> str:
+    """Expand a registered path; a clan-scoped source takes the clan tag in %TAG%."""
+    if source.get("tag_kind") == "clan":
+        if not clan:
+            raise net.ConfigError("clan-scoped source needs a clan tag")
+        return expand_source(source, path_index, TAG=clan)
+    if not tag:
+        raise net.ConfigError("source needs a player tag")
+    return expand_source(source, path_index, TAG=tag)
 
 
 def source_url(name, path_index=0, **values) -> str:

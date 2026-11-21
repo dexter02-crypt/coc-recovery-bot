@@ -897,13 +897,26 @@
       "markers": [],
       "js": false,
       "blocked": false,
-      "notes": "NO login: DataController has no class-level [Authorize], only Index() does. README's 'Data requires auth' is the docs page",
+      "notes": "NO login: DataController has no class-level [Authorize], only Index() does. README's 'Data requires auth' is the docs page The route is clan-scoped: %TAG% is a clan tag, so probe and scrape need --clan, and a player tag alone always reads as gone.",
       "kind": "api",
       "gaps": [
         "G04",
         "G16"
       ],
-      "source_url": "https://github.com/ptim74/fwastats/blob/master/src/FWAStatsWeb/Controllers/DataController.cs"
+      "source_url": "https://github.com/ptim74/fwastats/blob/master/src/FWAStatsWeb/Controllers/DataController.cs",
+      "tag_kind": "clan",
+      "schema": {
+        "/Clan/%TAG%/Members.json": {
+          "dates": [],
+          "tags": [
+            "tag",
+            "playerTag",
+            "members.*.tag",
+            "*.tag"
+          ],
+          "clans": []
+        }
+      }
     }
   ]
 }

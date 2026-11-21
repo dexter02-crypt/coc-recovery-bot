@@ -142,11 +142,18 @@ def start_ticket(note=""):
     """Mark the owner's one ticket locally; never open or submit a support page."""
     with _locked():
         entries = read_entries()
-        if any(item.get("event") == "start" for item in entries):
-            raise AttemptError("one ticket is already recorded in this workspace; this toolkit will not start another")
+        recorded = any(item.get("event") == "start" for item in entries)
         now = datetime.now(timezone.utc)
+        # The cooldown is evaluated first: when both gates apply, the remaining wait
+        # is the actionable fact and the single-ticket wording alone would hide it.
         if remaining_days(entries, now):
-            raise AttemptError(cooldown(entries, now))
+            message = cooldown(entries, now)
+            if recorded:
+                message = ("one ticket is already recorded; " + message +
+                           "; this toolkit will not start another")
+            raise AttemptError(message)
+        if recorded:
+            raise AttemptError("one ticket is already recorded in this workspace; this toolkit will not start another")
         entry = {"at": now.isoformat(), "outcome": "unknown", "event": "start",
                  "ticket_id": uuid.uuid4().hex, "note": str(note)}
         entries.append(entry)

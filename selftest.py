@@ -690,7 +690,8 @@ def _public_fetch_checks(suite: Suite, probe: object, scraper: object,
         before = copy.deepcopy(candidate)
         with mock.patch.object(net, "fetch", side_effect=lambda url, **kwargs:
                                observed(url, next(statuses))) as fetch:
-            rows, survivors = probe.probe("#P0Y2LQRR", {"sources": [candidate]})
+            rows, survivors, skipped = probe.probe("#P0Y2LQRR", {"sources": [candidate]})
+        equal(skipped, 0)
         equal(len(rows), 3)
         equal(fetch.call_count, 3)
         equal([row["verdict"] for row in rows], ["ok", "gone", "ok"])
@@ -766,8 +767,9 @@ def _public_fetch_checks(suite: Suite, probe: object, scraper: object,
         sources = {"sources": blocked_sources + [structured, page]}
         with mock.patch.object(net, "fetch", side_effect=lambda url, **kwargs:
                                observed(url, body=content[url])) as fetch:
-            records = scraper.scrape("#P0Y2LQRR", sources)
+            records, stats = scraper.scrape("#P0Y2LQRR", sources)
         equal(fetch.call_count, 2)
+        equal(stats["answered"], 2)
         equal(len(records), 2)
         by_name = {record["source"]: record for record in records}
         json_record, html_record = by_name[structured["name"]], by_name[page["name"]]
@@ -786,12 +788,86 @@ def _public_fetch_checks(suite: Suite, probe: object, scraper: object,
     def empty_scrape():
         empty_file = directory / "skipped-sources.json"
         empty_file.write_text(json.dumps({"sources": blocked_sources}), encoding="utf-8")
+        errors = io.StringIO()
         with mock.patch.dict(os.environ, {"COC_DATA_DIR": str(directory)}), \
                 mock.patch.object(net, "fetch", side_effect=AssertionError("flagged source was fetched")), \
-                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(errors):
             equal(scraper.main(["#P0Y2LQRR", "--sources", str(empty_file)]), 0)
         equal(json.loads((directory / "external.json").read_text(encoding="utf-8")), [])
-    suite.check("scrape: all skipped writes empty array and exits0", empty_scrape)
+        require("does not prove" in errors.getvalue(), "empty result was not explained")
+    suite.check("scrape: all skipped writes empty array, explains it and exits0", empty_scrape)
+
+    def bad_tag_kind():
+        broken = copy.deepcopy(single)
+        broken["tag_kind"] = "village"
+        bad_file = directory / "bad-kind-sources.json"
+        bad_file.write_text(json.dumps({"sources": [broken]}), encoding="utf-8")
+        raises(net.ConfigError, lambda: recover.load_sources(str(bad_file)))
+    suite.check("schema: sources tag_kind must be player or clan", bad_tag_kind)
+
+    def unreadable_registry():
+        with mock.patch.dict(os.environ, {"COC_DATA_DIR": str(directory)}), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            equal(scraper.main(["#P0Y2LQRR", "--sources", str(directory / "absent.json")]), 2)
+    suite.check("scrape: unreadable registry exits2 instead of writing empty", unreadable_registry)
+
+    clan_source = copy.deepcopy(page)
+    clan_source["name"] = "fixture_clan"
+    clan_source["paths"] = ["/Clan/%TAG%/Members.json"]
+    clan_source.update({"json": True, "tag_kind": "clan"})
+
+    def clan_without_flag():
+        with mock.patch.object(net, "fetch", side_effect=AssertionError("clan source was fetched")):
+            records, stats = scraper.scrape("#P0Y2LQRR", {"sources": [clan_source]})
+        equal(records, [])
+        equal(stats["clan_skipped"], 1)
+        require("--clan" in scraper.empty_reason(stats), scraper.empty_reason(stats))
+    suite.check("scrape: clan-scoped source waits for --clan", clan_without_flag)
+
+    def clan_with_flag():
+        seen = []
+        with mock.patch.object(net, "fetch", side_effect=lambda url, **kwargs:
+                               seen.append(url) or observed(url, body="{}")):
+            scraper.scrape("#P0Y2LQRR", {"sources": [clan_source]}, "2PP")
+        equal(len(seen), 1)
+        require(seen[0].endswith("/Clan/2PP/Members.json"), seen[0])
+    suite.check("scrape: --clan fills the clan route", clan_with_flag)
+
+    def probe_skips_clan():
+        with mock.patch.object(net, "fetch", side_effect=AssertionError("clan source was fetched")):
+            rows, survivors, skipped = probe.probe("#P0Y2LQRR", {"sources": [clan_source]})
+        equal((rows, survivors, skipped), ([], [], 1))
+    suite.check("probe: clan-scoped source waits for --clan", probe_skips_clan)
+
+    def probe_uses_clan():
+        seen = []
+        with mock.patch.object(net, "fetch", side_effect=lambda url, **kwargs:
+                               seen.append(url) or observed(url)):
+            rows, _, _ = probe.probe("#P0Y2LQRR", {"sources": [clan_source]}, "2PP")
+        equal(len(rows), 1)
+        require(seen[0].endswith("/Clan/2PP/Members.json"), seen[0])
+    suite.check("probe: --clan fills the clan route", probe_uses_clan)
+
+    def both_gates_message():
+        attempts_module = importlib.import_module("attempts")
+        gate = temp / "both-gates"
+        gate.mkdir()
+        now = dt.datetime.now(dt.timezone.utc)
+        history = [{"at": (now - dt.timedelta(days=26)).isoformat(), "outcome": "unknown",
+                    "event": "start", "ticket_id": "t", "note": ""},
+                   {"at": (now - dt.timedelta(days=5)).isoformat(), "outcome": "closed",
+                    "event": "status", "ticket_id": "t", "note": ""}]
+        (gate / "attempts.json").write_text(json.dumps(history), encoding="utf-8")
+        with mock.patch.dict(os.environ, {"COC_DATA_DIR": str(gate)}):
+            try:
+                attempts_module.start_ticket("second")
+            except attempts_module.AttemptError as error:
+                text = str(error)
+            else:
+                raise AssertionError("a second ticket was accepted")
+        require("already recorded" in text and "cooldown" in text, text)
+    suite.check("attempts: both gates name the cooldown and the single ticket", both_gates_message)
+
 
 
 def _run(root: Path, suite: Suite, temp: Path) -> None:
