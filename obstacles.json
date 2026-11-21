@@ -1,0 +1,5 @@
+{
+  "markers": [],
+  "structural": [],
+  "_note": "No marker or structural release dates have been admitted without verified primary evidence. G10 and G11 remain blocking. When admitted, each list must contain objects with name and ISO date, sorted ascending by date, with source provenance. A feature release does not establish an account-creation lower bound; an observed item at a dated time establishes only that the account existed by that observation."
+}
