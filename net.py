@@ -191,7 +191,13 @@ def _paced_request(url, method, headers, data, timeout):
 
 
 def classify(src, resp) -> str:
-    """Return one of the nine public-source classification labels."""
+    """Return one of the nine public-source classification labels.
+
+    The `auth` flag marks a route that needs a token; it does not turn every 2xx
+    into an `auth` result. On 2xx the body decides, so a reachable payload counts
+    as `ok` and survives --write-sources. The flag only stands in for a gated page
+    that answered without a password form or a marker.
+    """
     if resp.status == 0:
         return "unreachable"
     if resp.status in {403, 429}:
@@ -201,10 +207,9 @@ def classify(src, resp) -> str:
     if resp.status == 401:
         return "auth"
     low = (resp.body or "").lower()
-    if src.get("auth") and (200 <= resp.status < 400):
-        return "auth"
     if not 200 <= resp.status < 300 or not low.strip():
         return "empty"
+    gated = "auth" if src.get("auth") else "unmarked"
     if src.get("json"):
         try:
             json.loads(resp.body)
@@ -217,8 +222,8 @@ def classify(src, resp) -> str:
     markers = src.get("markers") or []
     hit = any(str(marker).lower() in low for marker in markers if str(marker))
     if src.get("js"):
-        return "ok-js" if hit or "javascript" in low else "unmarked"
-    return "ok" if hit else "unmarked"
+        return "ok-js" if hit or "javascript" in low else gated
+    return "ok" if hit else gated
 
 
 def fetch(url, *, method="GET", headers=None, data=None, ttl=900,

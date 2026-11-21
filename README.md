@@ -164,4 +164,4 @@ Every unresolved gap appears below and in `gaps.csv`. “Blocking” controls or
 
 The delivered revision passes the full offline suite on Python 3.12.14. The suite also parses every module using the Python 3.9 grammar; a native Python 3.9 interpreter was unavailable in the build environment. See the Offline verification table in `report.md` for the observed commands and limits. Passing fixtures does not verify an authenticated API response, a blocked tracker, support-question order, recovery eligibility or account ownership. No account recovery or ticket submission is part of the test suite.
 
-`tools/` is repository scaffolding, not part of the 17-file distribution.
+`tools/` is repository scaffolding, not part of the 17-file distribution. The one-shot migration it held has already been applied to this tree, so a re-run is only meaningful against an older checkout.

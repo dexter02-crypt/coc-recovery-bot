@@ -629,6 +629,11 @@ def _net_checks(suite: Suite, net: object, sources: dict, temp: Path) -> None:
         ("gone", {}, 404, "missing", "gone"),
         ("empty", {}, 200, " \n ", "empty"),
         ("auth", {"auth": True}, 200, "<form>Login Password</form>", "auth"),
+        ("auth-gate-password-form", {"auth": True}, 200,
+         '<form><input type="password">Sign in</form>', "auth"),
+        ("auth-reachable-json", {"json": True, "auth": True}, 200,
+         '{"tag": "#P0Y2LQRR"}', "ok"),
+        ("auth-reachable-unmarked-html", {"auth": True}, 200, "<html>nothing</html>", "auth"),
         ("js", {"js": True, "markers": ["player"]}, 200, "<html>player</html>", "ok-js"),
         ("marked", {"markers": ["clan"]}, 200, "<html>Clan records</html>", "ok"),
         ("unmarked", {"markers": ["clan"]}, 200, "<html>Nothing recorded</html>", "unmarked"),
@@ -847,6 +852,18 @@ def _public_fetch_checks(suite: Suite, probe: object, scraper: object,
         equal(len(rows), 1)
         require(seen[0].endswith("/Clan/2PP/Members.json"), seen[0])
     suite.check("probe: --clan fills the clan route", probe_uses_clan)
+
+    def auth_source_survives():
+        official = copy.deepcopy(single)
+        official["name"] = "fixture_official"
+        official.update({"json": True, "auth": True, "blocked": False})
+        with mock.patch.object(net, "fetch", side_effect=lambda url, **kwargs:
+                               observed(url, body='{"tag": "#P0Y2LQRR"}')):
+            rows, survivors, _ = probe.probe("#P0Y2LQRR", {"sources": [official]})
+        equal([row["verdict"] for row in rows], ["ok"])
+        equal(len(survivors), 1)
+        equal(survivors[0]["paths"], official["paths"])
+    suite.check("probe: a reachable auth source is retained, not dropped", auth_source_survives)
 
     def both_gates_message():
         attempts_module = importlib.import_module("attempts")
