@@ -72,11 +72,11 @@ def main(argv=None):
     dump("join-leave", "/player/%%23%s/join-leave" % tag, {"limit": 100}, "time", a.cap)
     dump("history-stats", "/player/%%23%s/history/stats" % tag,
          {"type": "donated", "limit": 100}, "eventTime", a.cap)
-    dump("battlelog", "/player/%%23%s/battlelog/history" % tag, {"limit": 100}, "battleTime", a.cap)
+    dump("battlelog", "/player/%%23%s/battlelog/history" % tag, {}, "battleTime", a.cap)
 
     for name, path in (("rankings", "/player/%s/rankings" % tag),
                        ("cwl-history", "/player/%%23%s/cwl/history?limit=100" % tag),
-                       ("league-history", "/player/%%23%s/league/history?limit=100" % tag)):
+                       ("league-history", "/player/%%23%s/league/history" % tag)):
         response, _ = get(path.split("?")[0], {"limit": 100} if "?" in path else {})
         if response.ok:
             open("raw/%s-00.json" % name, "w").write(response.body)

@@ -30,9 +30,9 @@
         "/player/%23%TAG%/war/attacks?limit=100",
         "/player/%23%TAG%/war/stats?limit=100",
         "/player/%23%TAG%/cwl/history?limit=100",
-        "/player/%23%TAG%/league/history?limit=100",
+        "/player/%23%TAG%/league/history",
         "/player/%23%TAG%/history/stats?type=donated&limit=100",
-        "/player/%23%TAG%/battlelog/history?limit=100"
+        "/player/%23%TAG%/battlelog/history"
       ],
       "markers": [],
       "kind": "api",
@@ -129,7 +129,7 @@
             "items.*.clan.tag"
           ]
         },
-        "/player/%23%TAG%/league/history?limit=100": {
+        "/player/%23%TAG%/league/history": {
           "dates": [
             "items.*.seasonId"
           ],
@@ -145,7 +145,7 @@
             "items.*.clanTag"
           ]
         },
-        "/player/%23%TAG%/battlelog/history?limit=100": {
+        "/player/%23%TAG%/battlelog/history": {
           "dates": [
             "items.*.battleTime"
           ],
@@ -159,7 +159,7 @@
         "G19",
         "G20"
       ],
-      "notes": "Live-probed 2026-11-22. history/changes REQUIRES type (400 'Type is required'); type accepts names or IDs 1-15 only, so the clan-scoped name_change ID 22 is unreachable and type=name returns an empty items array on a player with no observed rename. previous/current are scalars, not booleans. join-leave is a recent window, not lifetime: time[before]=2016-01-01 and 2014-06-01 both return items:[] with available:266. rankings takes the bare tag and returns location only; homeVillage/builderBase are absent. limit has no declared default or maximum, so paginate on time[before].",
+      "notes": "Live-probed 2026-11-22. history/changes REQUIRES type (400 'Type is required'); type accepts names or IDs 1-15 only, so the clan-scoped name_change ID 22 is unreachable and type=name returns an empty items array on a player with no observed rename. previous/current are scalars, not booleans. join-leave is a recent window, not lifetime: time[before]=2016-01-01 and 2014-06-01 both return items:[] with available:266. rankings takes the bare tag and returns location only; homeVillage/builderBase are absent. limit has no declared default or maximum, so paginate on time[before]. battlelog/history and league/history reject limit with 400 'Unsupported query parameter: limit' and take time[before]/time[after] only; cwl/history accepts limit. Retention for this player starts 2024-04, so every tracker date is a floor, not an age.",
       "sample_observation": {
         "path": "/player/%23G0JCRJQ0R/war/attacks?limit=1",
         "result": "Earlier direct HTTP response 200 recorded one defense; not a fresh request by this packaging step.",
