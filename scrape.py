@@ -112,8 +112,6 @@ def scrape(tag, config, clan=None):
                           "dates": extracted["dates"], "tags": extracted["tags"],
                           "clans": extracted["clans"], "excerpt": extracted["excerpt"],
                           "fetched_at": recover.utc_now()}
-                if pager:
-                    record["page"] = page
                 if extracted["location"]:
                     record["location"] = extracted["location"]
                 records.append(record)
