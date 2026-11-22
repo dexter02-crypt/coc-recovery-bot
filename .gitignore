@@ -14,3 +14,4 @@ attempts.json
 .attempts.lock
 raw/
 derived.json
+profile.json
