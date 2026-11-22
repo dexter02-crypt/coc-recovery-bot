@@ -24,7 +24,7 @@ for path, payload in load("raw/changes-type-*.json"):
             TH.append({"time": item["time"], "from": item.get("previous"), "to": item.get("current")})
             NOTES.append("[src=clashking path=%s seen=%s] th %s->%s"
                          % (path, OBS, item.get("previous"), item.get("current")))
-        if item.get("type") == "name_change":
+        if item.get("type") in ("name", "name_change"):
             NAMES.append({"time": item["time"], "name": item.get("current")})
             NOTES.append("[src=clashking path=%s seen=%s] name -> %s"
                          % (path, OBS, item.get("current")))
@@ -65,7 +65,7 @@ out = {
     "observed_at": OBS,
     "location": LOCATION,
     "names_oldest_first": [row["name"] for row in NAMES if row.get("name")],
-    "name_source": "clashking name_change" if NAMES else
+    "name_source": "clashking name change" if NAMES else
                    "none observed; use the Supercell data request",
     "th_ladder": TH,
     "earliest_activity": min(ACTIVITY) if ACTIVITY else None,
