@@ -46,13 +46,14 @@ def extract(source, path, body):
             # gap:G16 JSON without a source-specific schema is not promoted to evidence.
             return None
         fields = {}
-        for name in ("dates", "tags", "clans"):
+        for name in ("dates", "tags", "clans", "location"):
             candidates = mapping.get(name, [])
             fields[name] = [str(found) for pointer in candidates
                             for found in schema_values(payload, pointer)]
         dates = recover.dates_in("\n".join(fields["dates"]))
         tags = sorted(set(TAG_RX.findall("\n".join(fields["tags"]))))
         clans = sorted(set(text.strip() for text in fields["clans"] if text.strip()))
+        locations = sorted(set(text.strip() for text in fields["location"] if text.strip()))
         excerpt = json.dumps(fields, ensure_ascii=False, separators=(",", ":"))
         if not source.get("schema_verified", False):
             # gap:G16 Candidate schema fields need direct confirmation before support use.
@@ -62,9 +63,11 @@ def extract(source, path, body):
         dates = recover.dates_in(text)
         tags = sorted(set(TAG_RX.findall(text)))
         clans = sorted(set(match.strip() for match in CLAN_RX.findall(text) if match.strip()))
+        locations = []
         # gap:G19 Dates in page chrome can be unrelated to this player's activity.
         excerpt = "[unconfirmed page-to-player association: G19] " + text
-    return {"dates": dates[:200], "tags": tags[:50], "clans": clans[:25], "excerpt": excerpt[:1200]}
+    return {"dates": dates[:200], "tags": tags[:50], "clans": clans[:25],
+            "location": locations[:10], "excerpt": excerpt[:1200]}
 
 
 def scrape(tag, config, clan=None):
@@ -86,20 +89,40 @@ def scrape(tag, config, clan=None):
             except net.ConfigError:
                 continue
             stats["paths"] += 1
-            response = net.fetch(url)
-            if not response.ok or net.classify(source, response) not in {"ok", "unmarked"}:
-                continue
-            stats["answered"] += 1
-            try:
-                extracted = extract(source, path, response.body)
-            except (TypeError, ValueError):
-                extracted = None
-            if extracted is None:
-                continue
-            records.append({"source": source["name"], "url": url,
-                            "dates": extracted["dates"], "tags": extracted["tags"],
-                            "clans": extracted["clans"], "excerpt": extracted["excerpt"],
-                            "fetched_at": recover.utc_now()})
+            pager = source.get("paginate") or {}
+            before = None
+            seen = set()
+            for page in range(int(pager.get("max_pages", 1))):
+                page_url = url if not before else net.add_query(url, {pager["param"]: before})
+                response = net.fetch(page_url)
+                if not response.ok or net.classify(source, response) not in {"ok", "unmarked"}:
+                    break
+                stats["answered"] += 1
+                try:
+                    extracted = extract(source, path, response.body)
+                except (TypeError, ValueError):
+                    break
+                if extracted is None:
+                    break
+                fingerprint = (tuple(extracted["dates"]), tuple(extracted["tags"]))
+                if fingerprint != ((), ()) and fingerprint in seen:
+                    break
+                seen.add(fingerprint)
+                records.append({"source": source["name"], "url": page_url, "page": page,
+                                "dates": extracted["dates"], "tags": extracted["tags"],
+                                "clans": extracted["clans"], "location": extracted["location"],
+                                "excerpt": extracted["excerpt"],
+                                "fetched_at": recover.utc_now()})
+                if not pager:
+                    break
+                try:
+                    cursors = schema_values(json.loads(response.body), pager["cursor"])
+                except (TypeError, ValueError):
+                    cursors = []
+                nxt = cursors[-1] if cursors else None
+                if not nxt or nxt == before:
+                    break
+                before = nxt
     return records, stats
 
 

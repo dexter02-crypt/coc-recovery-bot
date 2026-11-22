@@ -21,17 +21,22 @@
       "name": "clashking",
       "base": "https://api.clashk.ing/v2",
       "paths": [
-        "/player/%23%TAG%/join-leave",
-        "/player/%23%TAG%/history/changes",
-        "/player/%23%TAG%/rankings",
-        "/player/%23%TAG%/war/attacks",
-        "/player/%23%TAG%/war/stats",
-        "/player/%23%TAG%/cwl/history",
-        "/player/%23%TAG%/league/history"
+        "/player/%23%TAG%/history/changes?type=7&limit=100",
+        "/player/%23%TAG%/history/changes?type=3&limit=100",
+        "/player/%23%TAG%/history/changes?type=10&limit=100",
+        "/player/%23%TAG%/history/changes?type=14&limit=100",
+        "/player/%23%TAG%/join-leave?limit=100",
+        "/player/%TAG%/rankings",
+        "/player/%23%TAG%/war/attacks?limit=100",
+        "/player/%23%TAG%/war/stats?limit=100",
+        "/player/%23%TAG%/cwl/history?limit=100",
+        "/player/%23%TAG%/league/history?limit=100",
+        "/player/%23%TAG%/history/stats?type=donated&limit=100",
+        "/player/%23%TAG%/battlelog/history?limit=100"
       ],
       "markers": [],
       "kind": "api",
-      "verified_how": "docs-page",
+      "verified_how": "live-observation",
       "date_checked": "2026-11-22",
       "json": true,
       "auth": false,
@@ -39,177 +44,131 @@
       "blocked": false,
       "source_url": "https://api.clashk.ing/openapi.json",
       "schema": {
-        "/player/%23%TAG%/join-leave": {
+        "/player/%23%TAG%/history/changes?type=7&limit=100": {
           "dates": [
-            "time",
-            "timestamp",
-            "date",
-            "items.*.time",
-            "items.*.timestamp",
-            "data.*.time"
+            "items.*.time"
           ],
-          "tags": [
-            "tag",
-            "player.tag",
-            "items.*.tag",
-            "data.*.tag"
-          ],
-          "clans": [
-            "clan.tag",
-            "clan_tag",
-            "items.*.clan.tag",
-            "data.*.clan.tag"
-          ]
+          "tags": [],
+          "clans": []
         },
-        "/player/%23%TAG%/history/changes": {
+        "/player/%23%TAG%/history/changes?type=3&limit=100": {
           "dates": [
-            "time",
-            "timestamp",
-            "date",
-            "items.*.time",
-            "items.*.timestamp",
-            "data.*.time"
+            "items.*.time"
           ],
-          "tags": [
-            "tag",
-            "player.tag",
-            "items.*.tag",
-            "data.*.tag"
-          ],
-          "clans": [
-            "clan.tag",
-            "items.*.clan.tag",
-            "data.*.clan.tag"
-          ]
+          "tags": [],
+          "clans": []
         },
-        "/player/%23%TAG%/rankings": {
+        "/player/%23%TAG%/history/changes?type=10&limit=100": {
           "dates": [
-            "time",
-            "timestamp",
-            "date",
-            "items.*.time",
-            "data.*.time"
+            "items.*.time"
           ],
-          "tags": [
-            "tag",
-            "player.tag",
-            "items.*.tag",
-            "data.*.tag"
-          ],
-          "clans": [
-            "clan.tag",
-            "items.*.clan.tag",
-            "data.*.clan.tag"
-          ]
+          "tags": [],
+          "clans": []
         },
-        "/player/%23%TAG%/war/attacks": {
+        "/player/%23%TAG%/history/changes?type=14&limit=100": {
           "dates": [
-            "time",
-            "timestamp",
-            "war.startTime",
-            "war.endTime",
-            "items.*.time",
-            "items.*.war.startTime",
-            "items.*.war.endTime",
-            "data.*.time",
-            "items.*.warEndTime",
-            "warEndTime"
+            "items.*.time"
           ],
-          "tags": [
-            "tag",
-            "attacker.tag",
-            "defender.tag",
-            "items.*.attacker.tag",
-            "items.*.defender.tag",
-            "data.*.attacker.tag",
-            "data.*.defender.tag"
-          ],
-          "clans": [
-            "clan.tag",
-            "attackingClan.tag",
-            "defendingClan.tag",
-            "war.clan.tag",
-            "war.opponent.tag",
-            "items.*.clan.tag",
-            "items.*.attackingClan.tag",
-            "items.*.defendingClan.tag",
-            "items.*.defendingClanTag",
-            "items.*.attackingClanTag",
-            "defendingClanTag",
-            "attackingClanTag"
-          ]
+          "tags": [],
+          "clans": []
         },
-        "/player/%23%TAG%/war/stats": {
+        "/player/%23%TAG%/join-leave?limit=100": {
           "dates": [
-            "time",
-            "timestamp",
-            "date",
             "items.*.time"
           ],
           "tags": [
-            "tag",
-            "player.tag",
             "items.*.tag"
           ],
           "clans": [
-            "clan.tag",
+            "items.*.clan.name",
             "items.*.clan.tag"
           ]
         },
-        "/player/%23%TAG%/cwl/history": {
-          "dates": [
-            "time",
-            "timestamp",
-            "season",
-            "items.*.time",
-            "items.*.season",
-            "data.*.season"
-          ],
+        "/player/%TAG%/rankings": {
+          "dates": [],
           "tags": [
-            "tag",
-            "player.tag",
-            "items.*.tag",
-            "data.*.tag"
+            "tag"
           ],
-          "clans": [
-            "clan.tag",
-            "items.*.clan.tag",
-            "data.*.clan.tag"
+          "clans": [],
+          "location": [
+            "location.countryCode",
+            "location.name"
           ]
         },
-        "/player/%23%TAG%/league/history": {
+        "/player/%23%TAG%/war/attacks?limit=100": {
           "dates": [
-            "time",
-            "timestamp",
-            "season",
-            "items.*.time",
-            "items.*.season",
-            "data.*.season"
+            "items.*.warEndTime"
           ],
           "tags": [
-            "tag",
-            "player.tag",
-            "items.*.tag",
-            "data.*.tag"
+            "items.*.attackerTag",
+            "items.*.defenderTag"
           ],
           "clans": [
-            "clan.tag",
-            "items.*.clan.tag",
-            "data.*.clan.tag"
+            "items.*.attackingClanTag",
+            "items.*.defendingClanTag"
           ]
+        },
+        "/player/%23%TAG%/war/stats?limit=100": {
+          "dates": [
+            "items.*.startTime",
+            "items.*.endTime"
+          ],
+          "tags": [
+            "items.*.player.tag"
+          ],
+          "clans": [
+            "items.*.clan.tag"
+          ]
+        },
+        "/player/%23%TAG%/cwl/history?limit=100": {
+          "dates": [
+            "items.*.season"
+          ],
+          "tags": [],
+          "clans": [
+            "items.*.clan.tag"
+          ]
+        },
+        "/player/%23%TAG%/league/history?limit=100": {
+          "dates": [
+            "items.*.seasonId"
+          ],
+          "tags": [],
+          "clans": []
+        },
+        "/player/%23%TAG%/history/stats?type=donated&limit=100": {
+          "dates": [
+            "items.*.eventTime"
+          ],
+          "tags": [],
+          "clans": [
+            "items.*.clanTag"
+          ]
+        },
+        "/player/%23%TAG%/battlelog/history?limit=100": {
+          "dates": [
+            "items.*.battleTime"
+          ],
+          "tags": [],
+          "clans": []
         }
       },
-      "schema_verified": false,
+      "schema_verified": true,
       "gaps": [
         "G16",
         "G19",
         "G20"
       ],
-      "notes": "The saved research observed documented join-leave, history/changes, rankings, war/attacks, war/stats and cwl/history routes. An earlier encoded-tag war/attacks request returned one recorded defense with HTTP 200. Exact current live fields, complete coverage, all schema candidate paths and league/history remain unconfirmed. Schema entries are extraction candidates, not a claimed validated upstream schema. A season label or feature-release date is not account creation evidence.",
+      "notes": "Live-probed 2026-11-22. history/changes REQUIRES type (400 'Type is required'); type accepts names or IDs 1-15 only, so the clan-scoped name_change ID 22 is unreachable and type=name returns an empty items array on a player with no observed rename. previous/current are scalars, not booleans. join-leave is a recent window, not lifetime: time[before]=2016-01-01 and 2014-06-01 both return items:[] with available:266. rankings takes the bare tag and returns location only; homeVillage/builderBase are absent. limit has no declared default or maximum, so paginate on time[before].",
       "sample_observation": {
         "path": "/player/%23G0JCRJQ0R/war/attacks?limit=1",
         "result": "Earlier direct HTTP response 200 recorded one defense; not a fresh request by this packaging step.",
         "date_checked": "2026-11-22"
+      },
+      "paginate": {
+        "param": "time[before]",
+        "cursor": "items.*.time",
+        "max_pages": 40
       }
     },
     {
@@ -917,6 +876,26 @@
           "clans": []
         }
       }
+    },
+    {
+      "name": "clashking_last_activity",
+      "base": "https://api.clashk.ing/v2",
+      "paths": [
+        "/player/%23%TAG%/last-activity"
+      ],
+      "markers": [],
+      "kind": "api",
+      "verified_how": "docs-page",
+      "date_checked": "2026-11-22",
+      "json": true,
+      "auth": true,
+      "js": false,
+      "blocked": false,
+      "gaps": [
+        "G19"
+      ],
+      "source_url": "https://api.clashk.ing/",
+      "notes": "Needs a Bearer token, and ClashKing's own token, not COC_API_TOKEN. Marked auth so scrape skips it cleanly instead of collecting a 401. Returns lastObservedAt only."
     }
   ]
 }
