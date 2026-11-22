@@ -108,11 +108,15 @@ def scrape(tag, config, clan=None):
                 if fingerprint != ((), ()) and fingerprint in seen:
                     break
                 seen.add(fingerprint)
-                records.append({"source": source["name"], "url": page_url, "page": page,
-                                "dates": extracted["dates"], "tags": extracted["tags"],
-                                "clans": extracted["clans"], "location": extracted["location"],
-                                "excerpt": extracted["excerpt"],
-                                "fetched_at": recover.utc_now()})
+                record = {"source": source["name"], "url": page_url,
+                          "dates": extracted["dates"], "tags": extracted["tags"],
+                          "clans": extracted["clans"], "excerpt": extracted["excerpt"],
+                          "fetched_at": recover.utc_now()}
+                if pager:
+                    record["page"] = page
+                if extracted["location"]:
+                    record["location"] = extracted["location"]
+                records.append(record)
                 if not pager:
                     break
                 try:
